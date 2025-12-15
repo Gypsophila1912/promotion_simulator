@@ -1,19 +1,18 @@
-// components/navigation/Header.tsx
+"use client";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-
+import { usePathname } from "next/navigation";
+import { signOutAction } from "@/app/actions/auth";
 import HeaderNav from "./PcMenu";
 import MenuButton from "./MenuButton";
 import MobileMenu from "./MobileMenu";
 
 export default function Header() {
-  const signOut = async () => {
-    "use server";
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    redirect("/auth/login");
-  };
+  const pathname = usePathname();
+
+  // ヘッダーを出したくないパス
+  if (pathname === "/auth/login" || pathname === "/auth/signup") {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
@@ -25,7 +24,7 @@ export default function Header() {
         <HeaderNav />
 
         <div className="flex items-center gap-2">
-          <form action={signOut}>
+          <form action={signOutAction}>
             <button
               type="submit"
               className="rounded-md bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600"
@@ -33,7 +32,6 @@ export default function Header() {
               ログアウト
             </button>
           </form>
-
           <MenuButton />
         </div>
       </div>
