@@ -10,7 +10,11 @@ export default function Header() {
   const pathname = usePathname();
 
   // ヘッダーを出したくないパス
-  if (pathname === "/auth/login" || pathname === "/auth/signup") {
+  if (
+    pathname === "/auth/login" ||
+    pathname === "/auth/signup" ||
+    pathname === "/"
+  ) {
     return null;
   }
 
