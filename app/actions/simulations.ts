@@ -37,7 +37,10 @@ export async function createSimulation(formData: SimulationFormData) {
 
   if (error) {
     console.error("Error creating simulation:", error);
-    return { success: false, errors: { submit: error.message } };
+    return {
+      success: false,
+      errors: { submit: "シミュレーションの作成に失敗しました" },
+    };
   }
 
   revalidatePath("/simulations");
@@ -80,7 +83,10 @@ export async function updateSimulation(
 
   if (error) {
     console.error("Error updating simulation:", error);
-    return { success: false, errors: { submit: error.message } };
+    return {
+      success: false,
+      errors: { submit: "シミュレーションの更新に失敗しました" },
+    };
   }
 
   revalidatePath("/simulations");
@@ -107,7 +113,10 @@ export async function deleteSimulation(id: string) {
 
   if (error) {
     console.error("Error deleting simulation:", error);
-    return { success: false, errors: { submit: error.message } };
+    return {
+      success: false,
+      errors: { submit: "シミュレーションの削除に失敗しました" },
+    };
   }
 
   revalidatePath("/simulations");
