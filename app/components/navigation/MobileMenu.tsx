@@ -19,6 +19,9 @@ export default function MobileMenu() {
         <Link href="/reviews" onClick={close}>
           口コミ
         </Link>
+        <Link href="/home" onClick={close}>
+          ホーム
+        </Link>
       </nav>
     </div>
   );
