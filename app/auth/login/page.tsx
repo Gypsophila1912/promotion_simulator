@@ -23,7 +23,7 @@ export default async function LoginPage() {
         <p className="text-center text-sm text-gray-600">
           アカウントをお持ちでない方は{" "}
           <Link
-            href="/signup"
+            href="/auth/signup"
             className="font-medium text-blue-600 hover:text-blue-500"
           >
             新規登録

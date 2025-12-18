@@ -22,13 +22,13 @@ export default async function HomePage() {
           ) : (
             <>
               <Link
-                href="/login"
+                href="/auth/login"
                 className="rounded-md bg-blue-600 px-6 py-3 text-lg font-semibold text-white hover:bg-blue-700"
               >
                 ログイン
               </Link>
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="rounded-md border-2 border-blue-600 bg-white px-6 py-3 text-lg font-semibold text-blue-600 hover:bg-blue-50"
               >
                 新規登録
