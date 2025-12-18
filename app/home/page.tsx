@@ -1,25 +1,19 @@
 "use client";
 import React, { useState } from 'react';
+// ↓ これを追加してください！
+import Link from 'next/link'; 
 
 export default function HomePage() {
   const [companyName, setCompanyName] = useState('');
   const [budget, setBudget] = useState('');
-  const [question, setQuestion] = useState('');
-  const [category, setCategory] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("分析開始:", { companyName, budget, question, category });
-    // ここにAI分析結果ページへの遷移処理などを記述します
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">ホーム画面</h1>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 会社名と予算 */}
+        {/* onSubmitは不要になるのでdivに変更してもOKです */}
+        <div className="space-y-6">
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">会社名</label>
@@ -43,15 +37,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          
           {/* 送信ボタン（質問へ） */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200"
+          {/* queryを使って、入力した会社名と予算を次のページへ送る設定です */}
+          <Link 
+            href={{
+              pathname: "/home/question",
+              query: { company: companyName, budget: budget }
+            }} 
+            className="block w-full"
           >
-            質問へ
-          </button>
-        </form>
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200">
+              質問へ
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );
