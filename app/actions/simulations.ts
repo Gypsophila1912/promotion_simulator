@@ -37,7 +37,7 @@ export async function createSimulation(formData: SimulationFormData) {
 
   if (error) {
     console.error("Error creating simulation:", error);
-    return { success: false, error: error.message };
+    return { success: false, errors: { submit: error.message } };
   }
 
   revalidatePath("/simulations");
@@ -65,7 +65,7 @@ export async function updateSimulation(
     .single();
 
   if (!existing || existing.user_id !== user.id) {
-    return { success: false, error: "権限がありません" };
+    return { success: false, errors: { submit: "権限がありません" } };
   }
 
   const { error } = await supabase
@@ -80,7 +80,7 @@ export async function updateSimulation(
 
   if (error) {
     console.error("Error updating simulation:", error);
-    return { success: false, error: error.message };
+    return { success: false, errors: { submit: error.message } };
   }
 
   revalidatePath("/simulations");
@@ -100,14 +100,14 @@ export async function deleteSimulation(id: string) {
     .single();
 
   if (!existing || existing.user_id !== user.id) {
-    return { success: false, error: "権限がありません" };
+    return { success: false, errors: { submit: "権限がありません" } };
   }
 
   const { error } = await supabase.from("simulations").delete().eq("id", id);
 
   if (error) {
     console.error("Error deleting simulation:", error);
-    return { success: false, error: error.message };
+    return { success: false, errors: { submit: error.message } };
   }
 
   revalidatePath("/simulations");

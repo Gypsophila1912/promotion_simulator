@@ -30,6 +30,13 @@ export default function SimulationForm() {
 
   return (
     <form onSubmit={handleSubmit} className="rounded-lg bg-white p-6 shadow">
+      {/* 一般エラーメッセージ */}
+      {errors.submit && (
+        <div className="mb-6 rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-800">{errors.submit}</p>
+        </div>
+      )}
+
       <div className="space-y-6">
         <div>
           <label
