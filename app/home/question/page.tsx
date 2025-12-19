@@ -43,7 +43,10 @@ function QuestionContent() {
       // 1 & Supabase: 全質問終了時にデータを保存
       setIsSubmitting(true);
       try {
-        console.log("Supabaseに保存中...", { companyName, budget, newAnswers });
+       setIsSubmitting(true);
+       try {
+         
+         // 実際のSupabase保存処理
         
         // 実際のSupabase保存処理
         const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
