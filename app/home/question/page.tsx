@@ -49,7 +49,7 @@ function QuestionContent() {
         const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
         .insert([{ 
         company_name: companyName, 
-        budget: parseInt(budget), 
+        budget: parseInt(budget, 10) || 0, 
         answers: newAnswers // 配列のまま保存（SQL側でjsonb型にしているため）
     }]);
 
@@ -83,7 +83,7 @@ function QuestionContent() {
         {/* 上部に現在の情報を小さく表示（引き継ぎ確認用） */}
         <div className="flex justify-between text-xs text-gray-400 mb-4">
           <span>会社: {companyName}</span>
-          <span>予算: {Number(budget).toLocaleString()}円</span>
+          <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}円</span>
         </div>
 
         <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
