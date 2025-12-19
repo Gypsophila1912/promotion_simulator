@@ -83,7 +83,7 @@ export default function QuestionPage() {
         {/* 上部に現在の情報を小さく表示（引き継ぎ確認用） */}
         <div className="flex justify-between text-xs text-gray-400 mb-4">
           <span>会社: {companyName}</span>
-          <span>予算: {Number(budget).toLocaleString()}円</span>
+          <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}円</span>
         </div>
 
         <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
