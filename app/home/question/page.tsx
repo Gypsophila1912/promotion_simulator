@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -12,7 +12,7 @@ const QUESTIONS = [
   { id: 5, question: "最も重視したい成果（KPI）は何ですか？", options: ["問い合わせ・購入", "認知度アップ", "アクセス数", "ファン獲得", "費用対効果"] },
 ];
 
-export default function QuestionPage() {
+function QuestionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -122,5 +122,19 @@ export default function QuestionPage() {
         </div>
       </div>
     </div>
+  );
+}
+export default function QuestionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-500">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <QuestionContent />
+    </Suspense>
   );
 }
