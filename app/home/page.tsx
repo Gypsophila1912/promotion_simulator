@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from 'react';
-// ↓ これを追加してください！
-import Link from 'next/link'; 
+"use client";
+import React, { useState } from 'react';
+import Link from 'next/link';
 
 export default function HomePage() {
   const [companyName, setCompanyName] = useState('');
