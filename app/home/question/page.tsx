@@ -49,7 +49,7 @@ export default function QuestionPage() {
         const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
         .insert([{ 
         company_name: companyName, 
-        budget: parseInt(budget), 
+        budget: parseInt(budget, 10) || 0, 
         answers: newAnswers // 配列のまま保存（SQL側でjsonb型にしているため）
     }]);
 
