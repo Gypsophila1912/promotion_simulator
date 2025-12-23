@@ -16,6 +16,9 @@ export default function MobileMenu() {
         <Link href="/dashboard" onClick={close}>
           ダッシュボード
         </Link>
+        <Link href="/simulations" onClick={close}>
+          シミュレーション
+        </Link>
         <Link href="/reviews" onClick={close}>
           口コミ
         </Link>
