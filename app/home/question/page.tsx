@@ -40,26 +40,21 @@ function QuestionContent() {
     if (currentStep < QUESTIONS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // 1 & Supabase: 全質問終了時にデータを保存
+      // 全質問終了時にデータを保存
       setIsSubmitting(true);
       try {
-       setIsSubmitting(true);
-       try {
-         
-         // 実際のSupabase保存処理
-        
         // 実際のSupabase保存処理
-        const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
-        .insert([{ 
-        company_name: companyName, 
-        budget: parseInt(budget, 10) || 0, 
-        answers: newAnswers // 配列のまま保存（SQL側でjsonb型にしているため）
-    }]);
+        const { error } = await supabase.from('ad_diagnoses')
+          .insert([{
+            company_name: companyName,
+            budget: parseInt(budget, 10) || 0,
+            answers: newAnswers
+          }]);
 
-    if (error) {
-        console.error("エラー内容:", error.message);
-        throw error;
-    }
+        if (error) {
+          console.error("エラー内容:", error.message);
+          throw error;
+        }
 
         // データの引き継ぎ：URLパラメータに回答も含めて結果ページへ
         const query = new URLSearchParams({
@@ -67,7 +62,7 @@ function QuestionContent() {
           budget: budget,
           answers: JSON.stringify(newAnswers)
         }).toString();
-        
+
         router.push(`/home/result?${query}`);
       } catch (error) {
         alert("保存に失敗しました");

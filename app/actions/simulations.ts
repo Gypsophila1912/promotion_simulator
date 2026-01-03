@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import type { SimulationFormData } from "@/lib/types/database";
 import { validateSimulation } from "@/lib/validation/simulation";
+import {
+  generateInvestmentAllocation,
+  convertToSimpleAnalysisResult,
+} from "@/lib/ai/investment-advisor";
 
 export async function createSimulation(formData: SimulationFormData) {
   const user = await requireAuth();
@@ -18,6 +22,29 @@ export async function createSimulation(formData: SimulationFormData) {
 
   const supabase = await createClient();
 
+  // AI分析を実行
+  let analysisResult = null;
+  let aiReasoning = null;
+
+  try {
+    const aiAnalysis = await generateInvestmentAllocation({
+      companyName: formData.company_name,
+      industry: formData.industry,
+      budget: formData.budget,
+      details: formData.details,
+    });
+
+    // analysis_result: シンプルな配分マップ（UI表示用の簡易版）
+    analysisResult = convertToSimpleAnalysisResult(aiAnalysis);
+
+    // ai_reasoning: 詳細情報をJSON文字列として保存
+    aiReasoning = JSON.stringify(aiAnalysis);
+  } catch (error) {
+    console.error("AI analysis failed:", error);
+    // AI分析失敗時もシミュレーション作成は続行
+    // 後で再生成できるようにnullで保存
+  }
+
   const { data, error } = await supabase
     .from("simulations")
     .insert([
@@ -27,9 +54,8 @@ export async function createSimulation(formData: SimulationFormData) {
         industry: formData.industry,
         budget: formData.budget,
         details: formData.details || null,
-        // AI機能はまだ実装しないのでnull
-        analysis_result: null,
-        ai_reasoning: null,
+        analysis_result: analysisResult,
+        ai_reasoning: aiReasoning,
       },
     ])
     .select()
