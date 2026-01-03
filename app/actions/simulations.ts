@@ -10,6 +10,8 @@ import {
   generateInvestmentAllocation,
   convertToSimpleAnalysisResult,
 } from "@/lib/ai/investment-advisor";
+import { getCachedAnalysis, setCachedAnalysis } from "@/lib/ai/cache";
+import type { AIAnalysisResult } from "@/lib/types/database";
 
 export async function createSimulation(formData: SimulationFormData) {
   const user = await requireAuth();
@@ -27,12 +29,25 @@ export async function createSimulation(formData: SimulationFormData) {
   let aiReasoning = null;
 
   try {
-    const aiAnalysis = await generateInvestmentAllocation({
-      companyName: formData.company_name,
-      industry: formData.industry,
-      budget: formData.budget,
-      details: formData.details,
-    });
+    // キャッシュチェック
+    const cached = getCachedAnalysis(formData.industry, formData.budget);
+
+    let aiAnalysis: AIAnalysisResult;
+    if (cached) {
+      console.log("Using cached AI analysis");
+      aiAnalysis = cached;
+    } else {
+      console.log("Generating new AI analysis");
+      aiAnalysis = await generateInvestmentAllocation({
+        companyName: formData.company_name,
+        industry: formData.industry,
+        budget: formData.budget,
+        details: formData.details,
+      });
+
+      // キャッシュに保存
+      setCachedAnalysis(formData.industry, formData.budget, aiAnalysis);
+    }
 
     // analysis_result: シンプルな配分マップ（UI表示用の簡易版）
     analysisResult = convertToSimpleAnalysisResult(aiAnalysis);
