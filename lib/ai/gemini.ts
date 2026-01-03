@@ -15,6 +15,9 @@
 
 const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
+// APIタイムアウト（デフォルト: 30秒）
+const API_TIMEOUT_MS = parseInt(process.env.GEMINI_API_TIMEOUT_MS || "30000", 10);
+
 export interface GeminiRequest {
   contents: {
     parts: {
@@ -91,13 +94,21 @@ export async function callGeminiAPI(
 
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${apiKey}`, {
+      // タイムアウト制御付きfetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+      const response = await fetch(GEMINI_API_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey, // 推奨: ヘッダーでAPIキーを送信
         },
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       // レート制限エラーの場合は指数バックオフでリトライ
       if (response.status === 429) {
@@ -136,6 +147,11 @@ export async function callGeminiAPI(
       console.log(`API call succeeded on attempt ${attempt + 1}`);
       return textContent;
     } catch (error) {
+      // タイムアウトエラーの場合
+      if (error instanceof Error && error.name === "AbortError") {
+        console.warn(`Request timeout after ${API_TIMEOUT_MS}ms on attempt ${attempt + 1}`);
+      }
+
       // 最後の試行の場合はエラーをスロー
       if (attempt === retries - 1) {
         console.error(`Gemini API call failed after ${retries} attempts:`, error);

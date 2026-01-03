@@ -53,7 +53,23 @@ export async function createSimulation(formData: SimulationFormData) {
     analysisResult = convertToSimpleAnalysisResult(aiAnalysis);
 
     // ai_reasoning: 詳細情報をJSON文字列として保存
-    aiReasoning = JSON.stringify(aiAnalysis);
+    const aiReasoningJson = JSON.stringify(aiAnalysis);
+
+    // JSONサイズチェック（PostgreSQL text型の制限を考慮）
+    // 一般的に1MB程度が安全な上限
+    const MAX_JSON_SIZE = 1024 * 1024; // 1MB
+    if (aiReasoningJson.length > MAX_JSON_SIZE) {
+      console.warn(`AI reasoning JSON size (${aiReasoningJson.length} bytes) exceeds safe limit`);
+      // サイズ超過時は要約版を保存
+      aiReasoning = JSON.stringify({
+        userBased: { summary: aiAnalysis.userBased.summary },
+        aiBased: { summary: aiAnalysis.aiBased.summary },
+        generatedAt: aiAnalysis.generatedAt,
+        truncated: true,
+      });
+    } else {
+      aiReasoning = aiReasoningJson;
+    }
   } catch (error) {
     console.error("AI analysis failed:", error);
     // AI分析失敗時もシミュレーション作成は続行

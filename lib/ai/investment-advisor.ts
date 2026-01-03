@@ -138,6 +138,38 @@ function parseAndValidateResponse(responseText: string): any {
 }
 
 /**
+ * AIAnalysisResultの構造を検証
+ */
+function validateAIAnalysisResult(result: AIAnalysisResult): void {
+  // userBasedの検証
+  if (!result.userBased || !result.userBased.allocations || !Array.isArray(result.userBased.allocations)) {
+    throw new Error("Invalid AIAnalysisResult: userBased.allocations is missing or invalid");
+  }
+  if (typeof result.userBased.totalBudget !== "number") {
+    throw new Error("Invalid AIAnalysisResult: userBased.totalBudget is missing or invalid");
+  }
+  if (typeof result.userBased.summary !== "string") {
+    throw new Error("Invalid AIAnalysisResult: userBased.summary is missing or invalid");
+  }
+
+  // aiBasedの検証
+  if (!result.aiBased || !result.aiBased.allocations || !Array.isArray(result.aiBased.allocations)) {
+    throw new Error("Invalid AIAnalysisResult: aiBased.allocations is missing or invalid");
+  }
+  if (typeof result.aiBased.totalBudget !== "number") {
+    throw new Error("Invalid AIAnalysisResult: aiBased.totalBudget is missing or invalid");
+  }
+  if (typeof result.aiBased.summary !== "string") {
+    throw new Error("Invalid AIAnalysisResult: aiBased.summary is missing or invalid");
+  }
+
+  // generatedAtの検証
+  if (typeof result.generatedAt !== "string") {
+    throw new Error("Invalid AIAnalysisResult: generatedAt is missing or invalid");
+  }
+}
+
+/**
  * 投資配分を生成（メイン関数）
  */
 export async function generateInvestmentAllocation(
@@ -188,6 +220,9 @@ export async function generateInvestmentAllocation(
       },
       generatedAt: new Date().toISOString(),
     };
+
+    // 最終的な構造を検証
+    validateAIAnalysisResult(result);
 
     return result;
   } catch (error) {
