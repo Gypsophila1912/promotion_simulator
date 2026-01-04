@@ -14,6 +14,25 @@ interface InvestmentInput {
 }
 
 /**
+ * AIからのレスポンス内のallocation要素の型
+ */
+interface ParsedAllocation {
+  category: string;
+  percentage: number;
+  amount: number;
+  reasoning: string;
+}
+
+/**
+ * AIからのレスポンス全体の型
+ */
+interface ParsedResponse {
+  allocations: ParsedAllocation[];
+  summary: string;
+  recommendedCategories?: string[];
+}
+
+/**
  * プロンプト生成: パターン1（ユーザー指定カテゴリーベース）
  */
 function buildUserBasedPrompt(input: InvestmentInput): string {
@@ -83,9 +102,46 @@ ${details ? `- 相談内容: ${details}` : ""}
 }
 
 /**
+ * allocation要素の詳細バリデーション
+ */
+function validateAllocation(item: unknown, index: number): asserts item is ParsedAllocation {
+  if (typeof item !== "object" || item === null) {
+    throw new Error(`Allocation at index ${index} is not an object`);
+  }
+
+  const allocation = item as Record<string, unknown>;
+
+  // category のバリデーション
+  if (typeof allocation.category !== "string" || allocation.category.trim() === "") {
+    throw new Error(`Allocation at index ${index} has invalid category (must be non-empty string)`);
+  }
+
+  // percentage のバリデーション
+  if (typeof allocation.percentage !== "number" || isNaN(allocation.percentage)) {
+    throw new Error(`Allocation at index ${index} has invalid percentage (must be a number)`);
+  }
+  if (allocation.percentage < 0 || allocation.percentage > 100) {
+    throw new Error(`Allocation at index ${index} has percentage out of range: ${allocation.percentage}% (must be 0-100)`);
+  }
+
+  // amount のバリデーション（存在チェックのみ、値は後で計算し直す）
+  if (typeof allocation.amount !== "number" || isNaN(allocation.amount)) {
+    throw new Error(`Allocation at index ${index} has invalid amount (must be a number)`);
+  }
+  if (allocation.amount < 0) {
+    throw new Error(`Allocation at index ${index} has negative amount: ${allocation.amount}`);
+  }
+
+  // reasoning のバリデーション
+  if (typeof allocation.reasoning !== "string" || allocation.reasoning.trim() === "") {
+    throw new Error(`Allocation at index ${index} has invalid reasoning (must be non-empty string)`);
+  }
+}
+
+/**
  * JSONレスポンスをパースして検証
  */
-function parseAndValidateResponse(responseText: string): any {
+function parseAndValidateResponse(responseText: string): ParsedResponse {
   // JSONブロックを抽出（```json ... ``` で囲まれている場合に対応）
   let jsonText = responseText.trim();
 
@@ -105,35 +161,89 @@ function parseAndValidateResponse(responseText: string): any {
   }
 
   try {
-    const parsed = JSON.parse(jsonText);
+    const parsed: unknown = JSON.parse(jsonText);
 
-    // 基本的なバリデーション
-    if (!parsed.allocations || !Array.isArray(parsed.allocations)) {
+    // パース結果が object かチェック
+    if (typeof parsed !== "object" || parsed === null) {
+      throw new Error("Invalid response: response is not an object");
+    }
+
+    const response = parsed as Record<string, unknown>;
+
+    // allocations のバリデーション
+    if (!response.allocations || !Array.isArray(response.allocations)) {
       throw new Error("Invalid response: allocations array missing");
     }
 
+    if (response.allocations.length === 0) {
+      throw new Error("Invalid response: allocations array is empty");
+    }
+
+    // 各allocation要素の詳細バリデーション
+    response.allocations.forEach((item, index) => {
+      validateAllocation(item, index);
+    });
+
+    // summary のバリデーション
+    if (typeof response.summary !== "string" || response.summary.trim() === "") {
+      throw new Error("Invalid response: summary is missing or empty");
+    }
+
+    // recommendedCategories は optional なので存在する場合のみチェック
+    if (response.recommendedCategories !== undefined) {
+      if (!Array.isArray(response.recommendedCategories)) {
+        throw new Error("Invalid response: recommendedCategories must be an array");
+      }
+      response.recommendedCategories.forEach((category, index) => {
+        if (typeof category !== "string" || category.trim() === "") {
+          throw new Error(`Invalid category at index ${index} in recommendedCategories`);
+        }
+      });
+    }
+
+    // 型アサーション: この時点で allocations は ParsedAllocation[] であることが保証されている
+    const allocations = response.allocations as ParsedAllocation[];
+
     // 合計が100%になっているか確認
-    const totalPercentage = parsed.allocations.reduce(
-      (sum: number, item: any) => sum + (item.percentage || 0),
+    const totalPercentage = allocations.reduce(
+      (sum, item) => sum + item.percentage,
       0
     );
 
     if (Math.abs(totalPercentage - 100) > 1) {
       console.warn(`Total percentage is ${totalPercentage}%, adjusting...`);
+
       // 微調整: 最大の項目で調整
-      const maxItem = parsed.allocations.reduce((max: any, item: any) =>
+      const maxItem = allocations.reduce((max, item) =>
         item.percentage > max.percentage ? item : max
       );
-      maxItem.percentage += 100 - totalPercentage;
+
+      const adjustment = 100 - totalPercentage;
+      const newPercentage = maxItem.percentage + adjustment;
+
+      // バウンドチェック: 調整後の値が有効な範囲内にあることを確認
+      if (newPercentage < 0 || newPercentage > 100) {
+        throw new Error(
+          `Cannot adjust percentages: adjustment would result in ${newPercentage}% ` +
+          `(max item: ${maxItem.percentage}%, adjustment: ${adjustment}%)`
+        );
+      }
+
+      maxItem.percentage = newPercentage;
+      console.log(`Adjusted ${maxItem.category} to ${newPercentage}%`);
     }
 
-    return parsed;
+    return {
+      allocations,
+      summary: response.summary as string,
+      recommendedCategories: response.recommendedCategories as string[] | undefined,
+    };
   } catch (error) {
     console.error("Failed to parse Gemini response.");
     console.error("Response length:", responseText.length);
     console.error("First 500 chars:", responseText.substring(0, 500));
     console.error("Last 500 chars:", responseText.substring(Math.max(0, responseText.length - 500)));
-    throw new Error(`Failed to parse AI response: ${error}`);
+    throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -183,7 +293,7 @@ export async function generateInvestmentAllocation(
 
     // 金額を計算
     const userBasedAllocations: InvestmentAllocation[] = userBasedData.allocations.map(
-      (item: any) => ({
+      (item) => ({
         category: item.category,
         percentage: item.percentage,
         amount: Math.round((input.budget * item.percentage) / 100),
@@ -198,7 +308,7 @@ export async function generateInvestmentAllocation(
 
     // 金額を計算
     const aiBasedAllocations: InvestmentAllocation[] = aiBasedData.allocations.map(
-      (item: any) => ({
+      (item) => ({
         category: item.category,
         percentage: item.percentage,
         amount: Math.round((input.budget * item.percentage) / 100),
