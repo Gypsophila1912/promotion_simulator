@@ -19,6 +19,8 @@ export default function EditReviewPage() {
     industry: "",
     budget: "",
     ad_methods: [] as string[],
+    ad_purpose: "購買",
+    target_audience: "",
     result_description: "",
     roi_rating: "3",
   });
@@ -51,6 +53,8 @@ export default function EditReviewPage() {
         industry: data.industry,
         budget: String(data.budget),
         ad_methods: data.ad_methods || [],
+        ad_purpose: data.ad_purpose || "購買",
+        target_audience: data.target_audience || "",
         result_description: data.result_description,
         roi_rating: String(data.roi_rating),
       });
@@ -82,6 +86,8 @@ export default function EditReviewPage() {
         industry: review.industry,
         budget: Number(review.budget),
         ad_methods: review.ad_methods,
+        ad_purpose: review.ad_purpose,
+        target_audience: review.target_audience,
         result_description: review.result_description,
         roi_rating: Number(review.roi_rating),
       })
@@ -169,6 +175,55 @@ export default function EditReviewPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* 広告目的 */}
+        <div>
+          <label className="block text-sm font-medium mb-2">広告目的</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="ad_purpose"
+                value="購買"
+                checked={review.ad_purpose === "購買"}
+                onChange={(e) =>
+                  setReview({ ...review, ad_purpose: e.target.value })
+                }
+              />
+              購買目的
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="ad_purpose"
+                value="周知"
+                checked={review.ad_purpose === "周知"}
+                onChange={(e) =>
+                  setReview({ ...review, ad_purpose: e.target.value })
+                }
+              />
+              周知目的
+            </label>
+          </div>
+        </div>
+
+        {/* ターゲット層 */}
+        <div>
+          <label className="block text-sm font-medium mb-1">ターゲット層</label>
+          <input
+            type="text"
+            className="w-full border px-3 py-2 rounded"
+            value={review.target_audience}
+            onChange={(e) =>
+              setReview({
+                ...review,
+                target_audience: e.target.value,
+              })
+            }
+            placeholder="例：20代女性、経営者層、学生など"
+            required
+          />
         </div>
 
         {/* 成果実感 */}

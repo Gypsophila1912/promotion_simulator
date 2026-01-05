@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function NewReviewPage() {
   const supabase = createClient();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,6 +16,8 @@ export default function NewReviewPage() {
     industry: "",
     budget: "",
     ad_methods: [] as string[],
+    ad_purpose: "購買",
+    target_audience: "",
     result_description: "",
     roi_rating: "3",
   });
@@ -58,6 +62,8 @@ export default function NewReviewPage() {
           industry: reviewData.industry,
           budget: Number(reviewData.budget),
           ad_methods: reviewData.ad_methods,
+          ad_purpose: reviewData.ad_purpose,
+          target_audience: reviewData.target_audience,
           result_description: reviewData.result_description,
           roi_rating: Number(reviewData.roi_rating),
         },
@@ -68,14 +74,10 @@ export default function NewReviewPage() {
         setMessage(`❌ エラー: ${error.message}`);
       } else {
         setMessage("✅ 口コミを保存しました！");
-        setReviewData({
-          company_name: "",
-          industry: "",
-          budget: "",
-          ad_methods: [],
-          result_description: "",
-          roi_rating: "3",
-        });
+        // 1秒後に一覧ページへ遷移
+        setTimeout(() => {
+          router.push("/reviews");
+        }, 1000);
       }
     } catch (err) {
       console.error(err);
@@ -87,6 +89,28 @@ export default function NewReviewPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mb-6">
+        <button
+          onClick={() => router.push("/reviews")}
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          口コミ一覧に戻る
+        </button>
+      </div>
+
       <h1 className="text-3xl font-bold mb-6">口コミ投稿</h1>
 
       {message && (
@@ -159,6 +183,55 @@ export default function NewReviewPage() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* 広告目的 */}
+        <div>
+          <label className="block text-sm font-medium mb-2">広告目的</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="ad_purpose"
+                value="購買"
+                checked={reviewData.ad_purpose === "購買"}
+                onChange={(e) =>
+                  setReviewData({ ...reviewData, ad_purpose: e.target.value })
+                }
+              />
+              購買目的
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="ad_purpose"
+                value="周知"
+                checked={reviewData.ad_purpose === "周知"}
+                onChange={(e) =>
+                  setReviewData({ ...reviewData, ad_purpose: e.target.value })
+                }
+              />
+              周知目的
+            </label>
+          </div>
+        </div>
+
+        {/* ターゲット層 */}
+        <div>
+          <label className="block text-sm font-medium mb-1">ターゲット層</label>
+          <input
+            type="text"
+            value={reviewData.target_audience}
+            onChange={(e) =>
+              setReviewData({
+                ...reviewData,
+                target_audience: e.target.value,
+              })
+            }
+            placeholder="例：20代女性、経営者層、学生など"
+            className="w-full px-3 py-2 border rounded-md"
+            required
+          />
         </div>
 
         {/* 成果実感 */}
