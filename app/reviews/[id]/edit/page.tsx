@@ -79,6 +79,13 @@ export default function EditReviewPage() {
     setSaving(true);
     setMessage("");
 
+    // バリデーション: 広告手法が1つも選択されていない場合
+    if (review.ad_methods.length === 0) {
+      setMessage("❌ 広告手法を最低1つ選択してください");
+      setSaving(false);
+      return;
+    }
+
     const { error } = await supabase
       .from("reviews")
       .update({
@@ -106,6 +113,10 @@ export default function EditReviewPage() {
     return <p className="p-6">読み込み中...</p>;
   }
 
+  const handleCancel = () => {
+    router.back();
+  };
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">口コミを編集</h1>
@@ -120,7 +131,9 @@ export default function EditReviewPage() {
       >
         {/* サービス名 */}
         <div>
-          <label className="block text-sm font-medium mb-1">サービス名</label>
+          <label className="block text-sm font-medium mb-1">
+            サービス名 <span className="text-red-500">*</span>
+          </label>
           <input
             className="w-full border px-3 py-2 rounded"
             value={review.company_name}
@@ -133,7 +146,9 @@ export default function EditReviewPage() {
 
         {/* 業種 */}
         <div>
-          <label className="block text-sm font-medium mb-1">業種</label>
+          <label className="block text-sm font-medium mb-1">
+            業種 <span className="text-red-500">*</span>
+          </label>
           <input
             className="w-full border px-3 py-2 rounded"
             value={review.industry}
@@ -144,7 +159,9 @@ export default function EditReviewPage() {
 
         {/* 費用感 */}
         <div>
-          <label className="block text-sm font-medium mb-1">費用（円）</label>
+          <label className="block text-sm font-medium mb-1">
+            費用（円） <span className="text-red-500">*</span>
+          </label>
           <input
             type="number"
             className="w-full border px-3 py-2 rounded"
@@ -157,7 +174,7 @@ export default function EditReviewPage() {
         {/* 利用した広告手法 */}
         <div>
           <label className="block text-sm font-medium mb-2">
-            利用した広告手法
+            利用した広告手法 <span className="text-red-500">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {AD_METHODS.map((method) => (
@@ -175,11 +192,14 @@ export default function EditReviewPage() {
               </button>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-1">※最低1つ選択してください</p>
         </div>
 
         {/* 広告目的 */}
         <div>
-          <label className="block text-sm font-medium mb-2">広告目的</label>
+          <label className="block text-sm font-medium mb-2">
+            広告目的 <span className="text-red-500">*</span>
+          </label>
           <div className="flex gap-4">
             <label className="flex items-center gap-2">
               <input
@@ -190,6 +210,7 @@ export default function EditReviewPage() {
                 onChange={(e) =>
                   setReview({ ...review, ad_purpose: e.target.value })
                 }
+                required
               />
               購買目的
             </label>
@@ -202,6 +223,7 @@ export default function EditReviewPage() {
                 onChange={(e) =>
                   setReview({ ...review, ad_purpose: e.target.value })
                 }
+                required
               />
               周知目的
             </label>
@@ -210,7 +232,9 @@ export default function EditReviewPage() {
 
         {/* ターゲット層 */}
         <div>
-          <label className="block text-sm font-medium mb-1">ターゲット層</label>
+          <label className="block text-sm font-medium mb-1">
+            ターゲット層 <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             className="w-full border px-3 py-2 rounded"
@@ -226,6 +250,27 @@ export default function EditReviewPage() {
           />
         </div>
 
+        {/* ROI評価 */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            ROI評価（1〜5） <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="w-full border px-3 py-2 rounded"
+            value={review.roi_rating}
+            onChange={(e) =>
+              setReview({ ...review, roi_rating: e.target.value })
+            }
+            required
+          >
+            <option value="1">1（悪い）</option>
+            <option value="2">2</option>
+            <option value="3">3（普通）</option>
+            <option value="4">4</option>
+            <option value="5">5（良い）</option>
+          </select>
+        </div>
+
         {/* 成果実感 */}
         <div>
           <label className="block text-sm font-medium mb-1">成果・感想</label>
@@ -239,36 +284,26 @@ export default function EditReviewPage() {
                 result_description: e.target.value,
               })
             }
-            required
           />
         </div>
 
-        {/* ROI評価 */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            ROI評価（1〜5）
-          </label>
-          <select
-            className="w-full border px-3 py-2 rounded"
-            value={review.roi_rating}
-            onChange={(e) =>
-              setReview({ ...review, roi_rating: e.target.value })
-            }
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300 transition disabled:bg-gray-100"
+            disabled={saving}
           >
-            <option value="1">1（悪い）</option>
-            <option value="2">2</option>
-            <option value="3">3（普通）</option>
-            <option value="4">4</option>
-            <option value="5">5（良い）</option>
-          </select>
+            キャンセル
+          </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+          >
+            {saving ? "保存中..." : "変更を保存"}
+          </button>
         </div>
-
-        <button
-          disabled={saving}
-          className="w-full bg-blue-600 text-white py-2 rounded disabled:bg-gray-400"
-        >
-          {saving ? "保存中..." : "変更を保存"}
-        </button>
       </form>
     </main>
   );

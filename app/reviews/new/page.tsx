@@ -43,6 +43,13 @@ export default function NewReviewPage() {
     setLoading(true);
     setMessage("");
 
+    // バリデーション: 広告手法が1つも選択されていない場合
+    if (reviewData.ad_methods.length === 0) {
+      setMessage("❌ 広告手法を最低1つ選択してください");
+      setLoading(false);
+      return;
+    }
+
     try {
       // ログインユーザー取得
       const {
@@ -75,12 +82,9 @@ export default function NewReviewPage() {
       } else {
         setMessage("✅ 口コミを保存しました！");
         // 1秒後に一覧ページへ遷移
-        const timeoutId = setTimeout(() => {
+        setTimeout(() => {
           router.push("/reviews");
         }, 1000);
-
-        // クリーンアップ用にタイマーIDを保存
-        return () => clearTimeout(timeoutId);
       }
     } catch (err) {
       console.error(err);
@@ -126,7 +130,9 @@ export default function NewReviewPage() {
       >
         {/* サービス名 */}
         <div>
-          <label className="block text-sm font-medium mb-1">サービス名</label>
+          <label className="block text-sm font-medium mb-1">
+            サービス名 <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             value={reviewData.company_name}
@@ -143,7 +149,9 @@ export default function NewReviewPage() {
 
         {/* 業界 */}
         <div>
-          <label className="block text-sm font-medium mb-1">業界</label>
+          <label className="block text-sm font-medium mb-1">
+            業界 <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             value={reviewData.industry}
@@ -158,7 +166,7 @@ export default function NewReviewPage() {
         {/* 予算 */}
         <div>
           <label className="block text-sm font-medium mb-1">
-            月額予算（円）
+            月額予算（円） <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -173,7 +181,9 @@ export default function NewReviewPage() {
 
         {/* 広告手法 */}
         <div>
-          <label className="block text-sm font-medium mb-2">広告手法</label>
+          <label className="block text-sm font-medium mb-2">
+            広告手法 <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-2">
             {AD_METHODS.map((method) => (
               <label key={method} className="flex items-center gap-2">
@@ -186,11 +196,14 @@ export default function NewReviewPage() {
               </label>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-1">※最低1つ選択してください</p>
         </div>
 
         {/* 広告目的 */}
         <div>
-          <label className="block text-sm font-medium mb-2">広告目的</label>
+          <label className="block text-sm font-medium mb-2">
+            広告目的 <span className="text-red-500">*</span>
+          </label>
           <div className="flex gap-4">
             <label className="flex items-center gap-2">
               <input
@@ -201,6 +214,7 @@ export default function NewReviewPage() {
                 onChange={(e) =>
                   setReviewData({ ...reviewData, ad_purpose: e.target.value })
                 }
+                required
               />
               購買目的
             </label>
@@ -213,6 +227,7 @@ export default function NewReviewPage() {
                 onChange={(e) =>
                   setReviewData({ ...reviewData, ad_purpose: e.target.value })
                 }
+                required
               />
               周知目的
             </label>
@@ -221,7 +236,9 @@ export default function NewReviewPage() {
 
         {/* ターゲット層 */}
         <div>
-          <label className="block text-sm font-medium mb-1">ターゲット層</label>
+          <label className="block text-sm font-medium mb-1">
+            ターゲット層 <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             value={reviewData.target_audience}
@@ -237,6 +254,27 @@ export default function NewReviewPage() {
           />
         </div>
 
+        {/* ROI */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            費用対効果（1〜5） <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={reviewData.roi_rating}
+            onChange={(e) =>
+              setReviewData({ ...reviewData, roi_rating: e.target.value })
+            }
+            className="w-full px-3 py-2 border rounded-md"
+            required
+          >
+            {[1, 2, 3, 4, 5].map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* 成果実感 */}
         <div>
           <label className="block text-sm font-medium mb-1">成果の実感</label>
@@ -250,28 +288,7 @@ export default function NewReviewPage() {
               })
             }
             className="w-full px-3 py-2 border rounded-md"
-            required
           />
-        </div>
-
-        {/* ROI */}
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            費用対効果（1〜5）
-          </label>
-          <select
-            value={reviewData.roi_rating}
-            onChange={(e) =>
-              setReviewData({ ...reviewData, roi_rating: e.target.value })
-            }
-            className="w-full px-3 py-2 border rounded-md"
-          >
-            {[1, 2, 3, 4, 5].map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </select>
         </div>
 
         <button
