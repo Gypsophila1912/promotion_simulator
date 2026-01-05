@@ -75,9 +75,12 @@ export default function NewReviewPage() {
       } else {
         setMessage("✅ 口コミを保存しました！");
         // 1秒後に一覧ページへ遷移
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           router.push("/reviews");
         }, 1000);
+
+        // クリーンアップ用にタイマーIDを保存
+        return () => clearTimeout(timeoutId);
       }
     } catch (err) {
       console.error(err);
