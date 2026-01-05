@@ -6,6 +6,7 @@ export default function HeaderNav() {
       <Link href="/dashboard">ダッシュボード</Link>
       <Link href="/simulations">シミュレーション</Link>
       <Link href="/reviews">口コミ</Link>
+      <Link href="/home">ホーム</Link>
     </nav>
   );
 }
