@@ -1,32 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { createSimulation } from "@/app/actions/simulations";
-import type { SimulationFormData, AgeAllocation } from "@/lib/types/database";
+import { updateSimulation } from "@/app/actions/simulations";
+import type {
+  Simulation,
+  SimulationFormData,
+  AgeAllocation,
+} from "@/lib/types/database";
+import { useRouter } from "next/navigation";
 
-export default function SimulationForm() {
+export default function SimulationEditForm({
+  simulation,
+}: {
+  simulation: Simulation;
+}) {
+  const router = useRouter();
   const [formData, setFormData] = useState<SimulationFormData>({
-    company_name: "",
-    industry: "",
-    budget: 0,
-    details: "",
+    company_name: simulation.company_name,
+    industry: simulation.industry,
+    budget: simulation.budget,
+    details: simulation.details || "",
+    age_allocation: simulation.age_allocation || undefined,
+    selected_months: simulation.selected_months || undefined,
+    regenerate_ai: false,
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // 年代別配分の状態管理
-  const [showAgeAllocation, setShowAgeAllocation] = useState(false);
-  const [ageAllocation, setAgeAllocation] = useState<AgeAllocation>({
-    "10代": 0,
-    "20代": 0,
-    "30代": 0,
-    "40代": 0,
-    "50代": 0,
-    "60代以上": 0,
-  });
+  const [showAgeAllocation, setShowAgeAllocation] = useState(
+    !!simulation.age_allocation
+  );
+  const [ageAllocation, setAgeAllocation] = useState<AgeAllocation>(
+    simulation.age_allocation || {
+      "10代": 0,
+      "20代": 0,
+      "30代": 0,
+      "40代": 0,
+      "50代": 0,
+      "60代以上": 0,
+    }
+  );
 
   // 月別配分の状態管理
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(
+    simulation.selected_months || []
+  );
 
   // 年代別配分の合計を計算
   const getTotalAgeAllocation = () => {
@@ -58,7 +77,7 @@ export default function SimulationForm() {
         selectedMonths.length > 0 ? selectedMonths : undefined,
     };
 
-    const result = await createSimulation(submissionData);
+    const result = await updateSimulation(simulation.id, submissionData);
 
     if (!result?.success && result?.errors) {
       setErrors(result.errors);
@@ -190,7 +209,7 @@ export default function SimulationForm() {
           {showAgeAllocation && (
             <div className="space-y-4 rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-600">
-                各年代に配分する予算を入力してください。AIが自動で年代別の提案も生成します。
+                各年代に配分する予算を入力してください。
               </p>
 
               {/* 年代別入力フィールド */}
@@ -320,6 +339,26 @@ export default function SimulationForm() {
             </p>
           )}
         </div>
+
+        {/* AI再生成オプション */}
+        <div className="border-t pt-6">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.regenerate_ai || false}
+              onChange={(e) =>
+                setFormData({ ...formData, regenerate_ai: e.target.checked })
+              }
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">
+              AI分析を再実行する（予算や業界を変更した場合に推奨）
+            </span>
+          </label>
+          <p className="mt-1 text-sm text-gray-500">
+            チェックすると、最新の情報でAI分析を再生成します。
+          </p>
+        </div>
       </div>
 
       <div className="mt-8 flex gap-4">
@@ -328,14 +367,15 @@ export default function SimulationForm() {
           disabled={loading}
           className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? "作成中..." : "作成する"}
+          {loading ? "更新中..." : "更新する"}
         </button>
-        <a
-          href="/simulations"
+        <button
+          type="button"
+          onClick={() => router.push(`/simulations/${simulation.id}`)}
           className="flex-1 rounded-md bg-gray-200 px-4 py-2 text-center text-sm font-semibold text-gray-700 hover:bg-gray-300"
         >
           キャンセル
-        </a>
+        </button>
       </div>
     </form>
   );

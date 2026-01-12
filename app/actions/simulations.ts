@@ -27,6 +27,8 @@ export async function createSimulation(formData: SimulationFormData) {
   // AI分析を実行
   let analysisResult = null;
   let aiReasoning = null;
+  let ageAllocation = null;
+  let monthAllocation = null;
 
   try {
     // キャッシュチェック
@@ -38,12 +40,15 @@ export async function createSimulation(formData: SimulationFormData) {
       aiAnalysis = cached;
     } else {
       console.log("Generating new AI analysis");
-      aiAnalysis = await generateInvestmentAllocation({
-        companyName: formData.company_name,
-        industry: formData.industry,
-        budget: formData.budget,
-        details: formData.details,
-      });
+      aiAnalysis = await generateInvestmentAllocation(
+        {
+          companyName: formData.company_name,
+          industry: formData.industry,
+          budget: formData.budget,
+          details: formData.details,
+        },
+        formData.selected_months
+      );
 
       // キャッシュに保存
       setCachedAnalysis(formData.industry, formData.budget, aiAnalysis);
@@ -52,6 +57,20 @@ export async function createSimulation(formData: SimulationFormData) {
     // analysis_result: シンプルな配分マップ（UI表示用の簡易版）
     analysisResult = convertToSimpleAnalysisResult(aiAnalysis);
 
+    // 年代別配分の処理
+    if (formData.age_allocation) {
+      // ユーザーが編集した配分を優先
+      ageAllocation = formData.age_allocation;
+    } else if (aiAnalysis.ageAllocation) {
+      // AIの提案をそのまま保存
+      ageAllocation = aiAnalysis.ageAllocation.allocation;
+    }
+
+    // 月別配分の処理
+    if (aiAnalysis.monthAllocation) {
+      monthAllocation = aiAnalysis.monthAllocation.allocation;
+    }
+
     // ai_reasoning: 詳細情報をJSON文字列として保存
     const aiReasoningJson = JSON.stringify(aiAnalysis);
 
@@ -59,11 +78,19 @@ export async function createSimulation(formData: SimulationFormData) {
     // 一般的に1MB程度が安全な上限
     const MAX_JSON_SIZE = 1024 * 1024; // 1MB
     if (aiReasoningJson.length > MAX_JSON_SIZE) {
-      console.warn(`AI reasoning JSON size (${aiReasoningJson.length} bytes) exceeds safe limit`);
+      console.warn(
+        `AI reasoning JSON size (${aiReasoningJson.length} bytes) exceeds safe limit`
+      );
       // サイズ超過時は要約版を保存
       aiReasoning = JSON.stringify({
         userBased: { summary: aiAnalysis.userBased.summary },
         aiBased: { summary: aiAnalysis.aiBased.summary },
+        ageAllocation: aiAnalysis.ageAllocation
+          ? { summary: aiAnalysis.ageAllocation.summary }
+          : null,
+        monthAllocation: aiAnalysis.monthAllocation
+          ? { summary: aiAnalysis.monthAllocation.summary }
+          : null,
         generatedAt: aiAnalysis.generatedAt,
         truncated: true,
       });
@@ -87,6 +114,9 @@ export async function createSimulation(formData: SimulationFormData) {
         details: formData.details || null,
         analysis_result: analysisResult,
         ai_reasoning: aiReasoning,
+        age_allocation: ageAllocation,
+        month_allocation: monthAllocation,
+        selected_months: formData.selected_months || null,
       },
     ])
     .select()
@@ -128,14 +158,49 @@ export async function updateSimulation(
     return { success: false, errors: { submit: "権限がありません" } };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let updateData: any = {
+    company_name: formData.company_name,
+    industry: formData.industry,
+    budget: formData.budget,
+    details: formData.details || null,
+    age_allocation: formData.age_allocation || null,
+    selected_months: formData.selected_months || null,
+  };
+
+  // AI再生成が必要な場合
+  if (formData.regenerate_ai) {
+    try {
+      const aiAnalysis = await generateInvestmentAllocation(
+        {
+          companyName: formData.company_name,
+          industry: formData.industry,
+          budget: formData.budget,
+          details: formData.details,
+        },
+        formData.selected_months
+      );
+
+      updateData.analysis_result = convertToSimpleAnalysisResult(aiAnalysis);
+      updateData.ai_reasoning = JSON.stringify(aiAnalysis);
+
+      // ユーザーが年代別配分を編集していなければAIの提案を使う
+      if (!formData.age_allocation && aiAnalysis.ageAllocation) {
+        updateData.age_allocation = aiAnalysis.ageAllocation.allocation;
+      }
+
+      if (aiAnalysis.monthAllocation) {
+        updateData.month_allocation = aiAnalysis.monthAllocation.allocation;
+      }
+    } catch (error) {
+      console.error("AI regeneration failed:", error);
+      // エラーでも基本情報の更新は続行
+    }
+  }
+
   const { error } = await supabase
     .from("simulations")
-    .update({
-      company_name: formData.company_name,
-      industry: formData.industry,
-      budget: formData.budget,
-      details: formData.details || null,
-    })
+    .update(updateData)
     .eq("id", id);
 
   if (error) {

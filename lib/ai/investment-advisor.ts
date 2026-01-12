@@ -4,7 +4,14 @@
  */
 
 import { callGeminiAPI } from "./gemini";
-import type { AIAnalysisResult, InvestmentAllocation } from "@/lib/types/database";
+import type {
+  AIAnalysisResult,
+  InvestmentAllocation,
+  AgeAllocation,
+  AgeAllocationProposal,
+  MonthAllocation,
+  MonthAllocationProposal,
+} from "@/lib/types/database";
 
 interface InvestmentInput {
   companyName: string;
@@ -99,6 +106,262 @@ ${details ? `- 相談内容: ${details}` : ""}
   "summary": "全体的な提案サマリー（200文字程度）",
   "recommendedCategories": ["提案した主要カテゴリー1", "カテゴリー2", ...]
 }`;
+}
+
+/**
+ * プロンプト生成: 年代別予算配分
+ */
+function buildAgeAllocationPrompt(input: InvestmentInput): string {
+  const { companyName, industry, budget, details } = input;
+
+  return `あなたはマーケティング投資の専門家です。年代別のターゲット予算配分を提案してください。
+
+【会社情報】
+- 会社名: ${companyName}
+- 投資カテゴリー: ${industry}
+- 総予算: ${budget.toLocaleString()}円
+${details ? `- 相談内容: ${details}` : ""}
+
+【指示】
+1. 以下の6つの年代区分で予算配分を提案してください:
+   - 10代, 20代, 30代, 40代, 50代, 60代以上
+
+2. 各年代への配分理由を説明してください
+
+3. 業界「${industry}」の特性を考慮し、メインターゲット層に重点配分してください
+
+4. 合計が総予算${budget.toLocaleString()}円と完全に一致するようにしてください
+
+【回答形式】(必ずJSON形式で回答してください)
+{
+  "allocation": {
+    "10代": 金額(数値),
+    "20代": 金額(数値),
+    "30代": 金額(数値),
+    "40代": 金額(数値),
+    "50代": 金額(数値),
+    "60代以上": 金額(数値)
+  },
+  "reasoning": {
+    "10代": "配分理由",
+    "20代": "配分理由",
+    "30代": "配分理由",
+    "40代": "配分理由",
+    "50代": "配分理由",
+    "60代以上": "配分理由"
+  },
+  "summary": "全体的な年代別配分戦略のサマリー（200文字程度）"
+}`;
+}
+
+/**
+ * プロンプト生成: 月別予算配分
+ */
+function buildMonthAllocationPrompt(
+  input: InvestmentInput,
+  selectedMonths: string[]
+): string {
+  const { companyName, industry, budget, details } = input;
+  const monthList = selectedMonths.join("、");
+
+  return `あなたはマーケティング投資の専門家です。選択された月への最適な予算配分を提案してください。
+
+【会社情報】
+- 会社名: ${companyName}
+- 投資カテゴリー: ${industry}
+- 総予算: ${budget.toLocaleString()}円
+- 掲載希望月: ${monthList}
+${details ? `- 相談内容: ${details}` : ""}
+
+【指示】
+1. 選択された月（${monthList}）に対して、最適な予算配分を提案してください
+
+2. 業界「${industry}」の繁忙期、閑散期、季節トレンドを考慮してください
+
+3. 各月への配分理由を説明してください
+
+4. 合計が総予算${budget.toLocaleString()}円と完全に一致するようにしてください
+
+【回答形式】(必ずJSON形式で回答してください)
+{
+  "allocation": {
+    ${selectedMonths.map((m) => `"${m}": 金額(数値)`).join(",\n    ")}
+  },
+  "reasoning": {
+    ${selectedMonths.map((m) => `"${m}": "配分理由"`).join(",\n    ")}
+  },
+  "summary": "全体的な月別配分戦略のサマリー（200文字程度）",
+  "seasonalInsights": "業界の季節性・トレンド分析（150文字程度）"
+}`;
+}
+
+/**
+ * レスポンステキストからJSON部分を抽出
+ */
+function extractJSON(responseText: string): string {
+  let jsonText = responseText.trim();
+
+  const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) {
+    jsonText = jsonMatch[1].trim();
+  } else if (responseText.includes("```")) {
+    const match = responseText.match(/```\s*([\s\S]*?)\s*```/);
+    if (match) {
+      jsonText = match[1].trim();
+    }
+  }
+
+  return jsonText;
+}
+
+/**
+ * 年代別配分レスポンスをパース
+ */
+function parseAgeAllocationResponse(
+  responseText: string,
+  budget: number
+): AgeAllocationProposal {
+  const jsonText = extractJSON(responseText);
+
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+
+    if (typeof parsed !== "object" || parsed === null) {
+      throw new Error("Invalid response: not an object");
+    }
+
+    const response = parsed as Record<string, unknown>;
+
+    // allocation の検証
+    if (!response.allocation || typeof response.allocation !== "object") {
+      throw new Error("Invalid response: allocation missing");
+    }
+
+    const allocation = response.allocation as Record<string, unknown>;
+    const ageGroups = ["10代", "20代", "30代", "40代", "50代", "60代以上"];
+
+    for (const age of ageGroups) {
+      if (typeof allocation[age] !== "number" || allocation[age] < 0) {
+        throw new Error(`Invalid allocation for ${age}`);
+      }
+    }
+
+    // 合計チェックと調整（1%の誤差を許容）
+    const total = Object.values(allocation as AgeAllocation).reduce(
+      (sum, val) => sum + val,
+      0
+    );
+    const tolerance = budget * 0.01;
+
+    if (Math.abs(total - budget) > tolerance) {
+      console.warn(
+        `Age allocation total mismatch: ${total} vs ${budget}, adjusting...`
+      );
+      const maxAge = ageGroups.reduce((max, age) =>
+        (allocation[age] as number) > (allocation[max] as number) ? age : max
+      );
+      allocation[maxAge] = (allocation[maxAge] as number) + (budget - total);
+    }
+
+    // reasoning の検証
+    if (!response.reasoning || typeof response.reasoning !== "object") {
+      throw new Error("Invalid response: reasoning missing");
+    }
+
+    // summary の検証
+    if (typeof response.summary !== "string") {
+      throw new Error("Invalid response: summary missing");
+    }
+
+    return {
+      allocation: allocation as AgeAllocation,
+      reasoning: response.reasoning as { [key: string]: string },
+      summary: response.summary,
+    };
+  } catch (error) {
+    console.error("Failed to parse age allocation response");
+    throw new Error(
+      `Failed to parse AI response: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+/**
+ * 月別配分レスポンスをパース
+ */
+function parseMonthAllocationResponse(
+  responseText: string,
+  budget: number,
+  selectedMonths: string[]
+): MonthAllocationProposal {
+  const jsonText = extractJSON(responseText);
+
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+
+    if (typeof parsed !== "object" || parsed === null) {
+      throw new Error("Invalid response: not an object");
+    }
+
+    const response = parsed as Record<string, unknown>;
+
+    // allocation の検証
+    if (!response.allocation || typeof response.allocation !== "object") {
+      throw new Error("Invalid response: allocation missing");
+    }
+
+    const allocation = response.allocation as Record<string, unknown>;
+
+    // 選択された月のみ存在するか確認
+    for (const month of selectedMonths) {
+      if (typeof allocation[month] !== "number" || allocation[month] < 0) {
+        throw new Error(`Invalid allocation for ${month}`);
+      }
+    }
+
+    // 合計チェックと調整
+    const total = Object.values(allocation).reduce(
+      (sum, val) => sum + (val as number),
+      0
+    );
+    const tolerance = budget * 0.01;
+
+    if (Math.abs(total - budget) > tolerance) {
+      console.warn(
+        `Month allocation total mismatch: ${total} vs ${budget}, adjusting...`
+      );
+      const maxMonth = selectedMonths.reduce((max, month) =>
+        (allocation[month] as number) > (allocation[max] as number)
+          ? month
+          : max
+      );
+      allocation[maxMonth] =
+        (allocation[maxMonth] as number) + (budget - total);
+    }
+
+    // その他フィールドの検証
+    if (!response.reasoning || typeof response.reasoning !== "object") {
+      throw new Error("Invalid response: reasoning missing");
+    }
+    if (typeof response.summary !== "string") {
+      throw new Error("Invalid response: summary missing");
+    }
+    if (typeof response.seasonalInsights !== "string") {
+      throw new Error("Invalid response: seasonalInsights missing");
+    }
+
+    return {
+      allocation: allocation as MonthAllocation,
+      reasoning: response.reasoning as { [key: string]: string },
+      summary: response.summary,
+      seasonalInsights: response.seasonalInsights,
+    };
+  } catch (error) {
+    console.error("Failed to parse month allocation response");
+    throw new Error(
+      `Failed to parse AI response: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
 }
 
 /**
@@ -283,7 +546,8 @@ function validateAIAnalysisResult(result: AIAnalysisResult): void {
  * 投資配分を生成（メイン関数）
  */
 export async function generateInvestmentAllocation(
-  input: InvestmentInput
+  input: InvestmentInput,
+  selectedMonths?: string[]
 ): Promise<AIAnalysisResult> {
   try {
     // パターン1: ユーザー指定カテゴリーベースの提案
@@ -292,14 +556,13 @@ export async function generateInvestmentAllocation(
     const userBasedData = parseAndValidateResponse(userBasedResponse);
 
     // 金額を計算
-    const userBasedAllocations: InvestmentAllocation[] = userBasedData.allocations.map(
-      (item) => ({
+    const userBasedAllocations: InvestmentAllocation[] =
+      userBasedData.allocations.map((item) => ({
         category: item.category,
         percentage: item.percentage,
         amount: Math.round((input.budget * item.percentage) / 100),
         reasoning: item.reasoning,
-      })
-    );
+      }));
 
     // パターン2: AI完全お任せの提案
     const aiBasedPrompt = buildAIBasedPrompt(input);
@@ -307,14 +570,30 @@ export async function generateInvestmentAllocation(
     const aiBasedData = parseAndValidateResponse(aiBasedResponse);
 
     // 金額を計算
-    const aiBasedAllocations: InvestmentAllocation[] = aiBasedData.allocations.map(
-      (item) => ({
+    const aiBasedAllocations: InvestmentAllocation[] =
+      aiBasedData.allocations.map((item) => ({
         category: item.category,
         percentage: item.percentage,
         amount: Math.round((input.budget * item.percentage) / 100),
         reasoning: item.reasoning,
-      })
-    );
+      }));
+
+    // 年代別配分の生成
+    const agePrompt = buildAgeAllocationPrompt(input);
+    const ageResponse = await callGeminiAPI(agePrompt);
+    const ageAllocation = parseAgeAllocationResponse(ageResponse, input.budget);
+
+    // 月別配分の生成（選択月がある場合のみ）
+    let monthAllocation: MonthAllocationProposal | undefined;
+    if (selectedMonths && selectedMonths.length > 0) {
+      const monthPrompt = buildMonthAllocationPrompt(input, selectedMonths);
+      const monthResponse = await callGeminiAPI(monthPrompt);
+      monthAllocation = parseMonthAllocationResponse(
+        monthResponse,
+        input.budget,
+        selectedMonths
+      );
+    }
 
     const result: AIAnalysisResult = {
       userBased: {
@@ -328,6 +607,8 @@ export async function generateInvestmentAllocation(
         summary: aiBasedData.summary,
         recommendedCategories: aiBasedData.recommendedCategories || [],
       },
+      ageAllocation,
+      monthAllocation,
       generatedAt: new Date().toISOString(),
     };
 

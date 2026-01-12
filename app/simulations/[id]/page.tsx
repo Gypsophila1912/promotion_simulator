@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { AIAnalysisResult } from "@/lib/types/database";
+import { deleteSimulation } from "@/app/actions/simulations";
+import DeleteButton from "./DeleteButton";
 
 export default async function SimulationDetailPage({
   params,
@@ -36,13 +38,24 @@ export default async function SimulationDetailPage({
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <Link
           href="/simulations"
           className="text-sm text-blue-600 hover:text-blue-700"
         >
           ← 一覧に戻る
         </Link>
+
+        {/* 編集・削除ボタン */}
+        <div className="flex gap-3">
+          <Link
+            href={`/simulations/${simulation.id}/edit`}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            編集
+          </Link>
+          <DeleteButton simulationId={simulation.id} />
+        </div>
       </div>
 
       <div className="rounded-lg bg-white p-8 shadow">
@@ -196,7 +209,8 @@ export default async function SimulationDetailPage({
 
             {/* 生成日時 */}
             <div className="text-sm text-gray-500">
-              分析生成日時: {new Date(aiAnalysis.generatedAt).toLocaleString("ja-JP")}
+              分析生成日時:{" "}
+              {new Date(aiAnalysis.generatedAt).toLocaleString("ja-JP")}
             </div>
           </div>
         ) : (
@@ -209,6 +223,91 @@ export default async function SimulationDetailPage({
             </p>
           </div>
         )}
+
+        {/* 年代別配分の表示 */}
+        {simulation.age_allocation && (
+          <div className="mt-8 border-t pt-6">
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">
+              年代別予算配分
+            </h2>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(simulation.age_allocation).map(([age, amount]) => (
+                <div key={age} className="rounded-lg bg-gray-50 p-4">
+                  <h3 className="text-sm font-medium text-gray-500">{age}</h3>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">
+                    {(amount as number).toLocaleString()}円
+                  </p>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className="h-full rounded-full bg-blue-500"
+                      style={{
+                        width: `${((amount as number) / simulation.budget) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {(((amount as number) / simulation.budget) * 100).toFixed(1)}%
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 月別配分の表示 */}
+        {simulation.month_allocation &&
+          Object.keys(simulation.month_allocation).length > 0 && (
+            <div className="mt-8 border-t pt-6">
+              <h2 className="mb-4 text-2xl font-bold text-gray-900">
+                月別予算配分
+              </h2>
+              <div className="grid grid-cols-3 gap-4">
+                {Object.entries(simulation.month_allocation)
+                  .sort(([a], [b]) => {
+                    const monthOrder = [
+                      "1月",
+                      "2月",
+                      "3月",
+                      "4月",
+                      "5月",
+                      "6月",
+                      "7月",
+                      "8月",
+                      "9月",
+                      "10月",
+                      "11月",
+                      "12月",
+                    ];
+                    return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+                  })
+                  .map(([month, amount]) => (
+                    <div key={month} className="rounded-lg bg-green-50 p-4">
+                      <h3 className="text-sm font-medium text-gray-500">
+                        {month}
+                      </h3>
+                      <p className="mt-1 text-lg font-semibold text-gray-900">
+                        {(amount as number).toLocaleString()}円
+                      </p>
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-green-500"
+                          style={{
+                            width: `${((amount as number) / simulation.budget) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {(
+                          ((amount as number) / simulation.budget) *
+                          100
+                        ).toFixed(1)}
+                        %
+                      </p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
       </div>
     </main>
   );
