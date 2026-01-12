@@ -63,8 +63,17 @@ export default function SimulationEditForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrors({});
+
+    // 年代別配分が有効で、合計が予算と一致しない場合はエラー
+    if (showAgeAllocation && getTotalAgeAllocation() > 0) {
+      if (getTotalAgeAllocation() !== formData.budget) {
+        setErrors({ age_allocation: "合計が予算と一致していません" });
+        return;
+      }
+    }
+
+    setLoading(true);
 
     // フォームデータに年代別配分と月別配分を追加
     const submissionData: SimulationFormData = {

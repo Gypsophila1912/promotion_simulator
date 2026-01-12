@@ -32,7 +32,11 @@ export async function createSimulation(formData: SimulationFormData) {
 
   try {
     // キャッシュチェック
-    const cached = getCachedAnalysis(formData.industry, formData.budget);
+    const cached = getCachedAnalysis(
+      formData.industry,
+      formData.budget,
+      formData.selected_months
+    );
 
     let aiAnalysis: AIAnalysisResult;
     if (cached) {
@@ -51,7 +55,12 @@ export async function createSimulation(formData: SimulationFormData) {
       );
 
       // キャッシュに保存
-      setCachedAnalysis(formData.industry, formData.budget, aiAnalysis);
+      setCachedAnalysis(
+        formData.industry,
+        formData.budget,
+        aiAnalysis,
+        formData.selected_months
+      );
     }
 
     // analysis_result: シンプルな配分マップ（UI表示用の簡易版）
