@@ -40,21 +40,34 @@ interface ParsedResponse {
 }
 
 /**
+ * ユーザー入力を安全にエスケープ
+ */
+function escapeUserInput(input: string): string {
+  // JSON文字列としてエスケープし、前後の引用符を除去
+  return JSON.stringify(input).slice(1, -1);
+}
+
+/**
  * プロンプト生成: パターン1（ユーザー指定カテゴリーベース）
  */
 function buildUserBasedPrompt(input: InvestmentInput): string {
   const { companyName, industry, budget, details } = input;
 
+  // ユーザー入力をエスケープしてプロンプトインジェクションを防止
+  const safeCompanyName = escapeUserInput(companyName);
+  const safeIndustry = escapeUserInput(industry);
+  const safeDetails = details ? escapeUserInput(details) : "";
+
   return `あなたはマーケティング投資の専門家です。以下の情報に基づいて、投資配分を提案してください。
 
 【会社情報】
-- 会社名: ${companyName}
-- 投資カテゴリー: ${industry}
+- 会社名: ${safeCompanyName}
+- 投資カテゴリー: ${safeIndustry}
 - 予算: ${budget.toLocaleString()}円
-${details ? `- 相談内容: ${details}` : ""}
+${details ? `- 相談内容: ${safeDetails}` : ""}
 
 【指示】
-1. ユーザーが指定した投資カテゴリー「${industry}」を基に、具体的なサブカテゴリーに分けて配分を提案してください
+1. ユーザーが指定した投資カテゴリー「${safeIndustry}」を基に、具体的なサブカテゴリーに分けて配分を提案してください
 2. 例: 「SNS広告、YouTube広告」→「Instagram広告(40%)」「Facebook広告(30%)」「YouTube TrueView広告(30%)」
 3. 各カテゴリーへの配分割合(%)、金額、選定理由を説明してください
 4. 合計が100%になるようにしてください
@@ -79,12 +92,16 @@ ${details ? `- 相談内容: ${details}` : ""}
 function buildAIBasedPrompt(input: InvestmentInput): string {
   const { companyName, budget, details } = input;
 
+  // ユーザー入力をエスケープしてプロンプトインジェクションを防止
+  const safeCompanyName = escapeUserInput(companyName);
+  const safeDetails = details ? escapeUserInput(details) : "";
+
   return `あなたはマーケティング投資の専門家です。以下の情報に基づいて、最適な投資配分を自由に提案してください。
 
 【会社情報】
-- 会社名: ${companyName}
+- 会社名: ${safeCompanyName}
 - 予算: ${budget.toLocaleString()}円
-${details ? `- 相談内容: ${details}` : ""}
+${details ? `- 相談内容: ${safeDetails}` : ""}
 
 【指示】
 1. 投資カテゴリーも含めて、完全に自由に提案してください
@@ -114,13 +131,18 @@ ${details ? `- 相談内容: ${details}` : ""}
 function buildAgeAllocationPrompt(input: InvestmentInput): string {
   const { companyName, industry, budget, details } = input;
 
+  // ユーザー入力をエスケープしてプロンプトインジェクションを防止
+  const safeCompanyName = escapeUserInput(companyName);
+  const safeIndustry = escapeUserInput(industry);
+  const safeDetails = details ? escapeUserInput(details) : "";
+
   return `あなたはマーケティング投資の専門家です。年代別のターゲット予算配分を提案してください。
 
 【会社情報】
-- 会社名: ${companyName}
-- 投資カテゴリー: ${industry}
+- 会社名: ${safeCompanyName}
+- 投資カテゴリー: ${safeIndustry}
 - 総予算: ${budget.toLocaleString()}円
-${details ? `- 相談内容: ${details}` : ""}
+${details ? `- 相談内容: ${safeDetails}` : ""}
 
 【指示】
 1. 以下の6つの年代区分で予算配分を提案してください:
@@ -128,7 +150,7 @@ ${details ? `- 相談内容: ${details}` : ""}
 
 2. 各年代への配分理由を説明してください
 
-3. 業界「${industry}」の特性を考慮し、メインターゲット層に重点配分してください
+3. 業界「${safeIndustry}」の特性を考慮し、メインターゲット層に重点配分してください
 
 4. 合計が総予算${budget.toLocaleString()}円と完全に一致するようにしてください
 
@@ -162,21 +184,27 @@ function buildMonthAllocationPrompt(
   selectedMonths: string[]
 ): string {
   const { companyName, industry, budget, details } = input;
-  const monthList = selectedMonths.join("、");
+
+  // ユーザー入力をエスケープしてプロンプトインジェクションを防止
+  const safeCompanyName = escapeUserInput(companyName);
+  const safeIndustry = escapeUserInput(industry);
+  const safeDetails = details ? escapeUserInput(details) : "";
+  // selectedMonthsは内部生成されたデータなのでエスケープ不要だが、念のため
+  const monthList = selectedMonths.map(m => escapeUserInput(m)).join("、");
 
   return `あなたはマーケティング投資の専門家です。選択された月への最適な予算配分を提案してください。
 
 【会社情報】
-- 会社名: ${companyName}
-- 投資カテゴリー: ${industry}
+- 会社名: ${safeCompanyName}
+- 投資カテゴリー: ${safeIndustry}
 - 総予算: ${budget.toLocaleString()}円
 - 掲載希望月: ${monthList}
-${details ? `- 相談内容: ${details}` : ""}
+${details ? `- 相談内容: ${safeDetails}` : ""}
 
 【指示】
 1. 選択された月（${monthList}）に対して、最適な予算配分を提案してください
 
-2. 業界「${industry}」の繁忙期、閑散期、季節トレンドを考慮してください
+2. 業界「${safeIndustry}」の繁忙期、閑散期、季節トレンドを考慮してください
 
 3. 各月への配分理由を説明してください
 

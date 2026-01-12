@@ -16,13 +16,15 @@ export default function DeleteButton({
     }
 
     setIsDeleting(true);
-    try {
-      await deleteSimulation(simulationId);
-    } catch (error) {
-      console.error("削除エラー:", error);
-      alert("削除に失敗しました");
+    const result = await deleteSimulation(simulationId);
+
+    // Server Actionは例外を投げずに結果オブジェクトを返す
+    if (result && !result.success) {
+      console.error("削除エラー:", result.errors);
+      alert(result.errors?.submit || "削除に失敗しました");
       setIsDeleting(false);
     }
+    // 成功時はredirectされるのでloading状態は解除不要
   };
 
   return (
