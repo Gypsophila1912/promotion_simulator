@@ -182,7 +182,30 @@ export async function updateSimulation(
       );
 
       updateData.analysis_result = convertToSimpleAnalysisResult(aiAnalysis);
-      updateData.ai_reasoning = JSON.stringify(aiAnalysis);
+
+      // JSONサイズチェック（PostgreSQL text型の制限を考慮）
+      const aiReasoningJson = JSON.stringify(aiAnalysis);
+      const MAX_JSON_SIZE = 1024 * 1024; // 1MB
+      if (aiReasoningJson.length > MAX_JSON_SIZE) {
+        console.warn(
+          `AI reasoning JSON size (${aiReasoningJson.length} bytes) exceeds safe limit`
+        );
+        // サイズ超過時は要約版を保存
+        updateData.ai_reasoning = JSON.stringify({
+          userBased: { summary: aiAnalysis.userBased.summary },
+          aiBased: { summary: aiAnalysis.aiBased.summary },
+          ageAllocation: aiAnalysis.ageAllocation
+            ? { summary: aiAnalysis.ageAllocation.summary }
+            : null,
+          monthAllocation: aiAnalysis.monthAllocation
+            ? { summary: aiAnalysis.monthAllocation.summary }
+            : null,
+          generatedAt: aiAnalysis.generatedAt,
+          truncated: true,
+        });
+      } else {
+        updateData.ai_reasoning = aiReasoningJson;
+      }
 
       // ユーザーが年代別配分を編集していなければAIの提案を使う
       if (!formData.age_allocation && aiAnalysis.ageAllocation) {

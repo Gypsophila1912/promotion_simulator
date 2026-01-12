@@ -288,7 +288,18 @@ function parseAgeAllocationResponse(
       const maxAge = ageGroups.reduce((max, age) =>
         (allocation[age] as number) > (allocation[max] as number) ? age : max
       );
-      allocation[maxAge] = (allocation[maxAge] as number) + (budget - total);
+      const adjustment = budget - total;
+      const newValue = (allocation[maxAge] as number) + adjustment;
+
+      // 調整後の値が負にならないかチェック
+      if (newValue < 0) {
+        throw new Error(
+          `Cannot adjust age allocation: adjustment would result in negative value ` +
+            `(${maxAge}: ${allocation[maxAge]} + ${adjustment} = ${newValue})`
+        );
+      }
+
+      allocation[maxAge] = newValue;
     }
 
     // reasoning の検証
@@ -363,8 +374,18 @@ function parseMonthAllocationResponse(
           ? month
           : max
       );
-      allocation[maxMonth] =
-        (allocation[maxMonth] as number) + (budget - total);
+      const adjustment = budget - total;
+      const newValue = (allocation[maxMonth] as number) + adjustment;
+
+      // 調整後の値が負にならないかチェック
+      if (newValue < 0) {
+        throw new Error(
+          `Cannot adjust month allocation: adjustment would result in negative value ` +
+            `(${maxMonth}: ${allocation[maxMonth]} + ${adjustment} = ${newValue})`
+        );
+      }
+
+      allocation[maxMonth] = newValue;
     }
 
     // その他フィールドの検証
