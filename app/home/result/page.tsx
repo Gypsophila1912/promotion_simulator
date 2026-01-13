@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getAiAdvice } from '@/lib/gemini';
-import { Review } from '@/lib/types/database'; // 型をインポート
+import { Review } from '@/lib/types/database';
 
 const QUESTIONS = [
   { id: 1, question: "主なターゲット層" },
@@ -17,6 +17,8 @@ const QUESTIONS = [
 function ResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
+  // supabaseインスタンスをコンポーネント内で作成
   const supabase = createClient();
 
   const companyName = searchParams.get('company') || 'お客様';
@@ -29,7 +31,6 @@ function ResultContent() {
     answers = [];
   }
 
-  // 【修正】any[] を Review[] に変更
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [aiAdvice, setAiAdvice] = useState<string>("AIが分析しています...");
@@ -43,7 +44,15 @@ function ResultContent() {
     const runDiagnosis = async () => {
       setLoadingReviews(true);
       try {
-        // 1. レビューを取得（型安全に）
+        // 1. ユーザー認証の確認 (CodeRabbit指摘: データ隔離のため)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          alert("セッションが切れました。ログインし直してください。");
+          router.push('/login');
+          return;
+        }
+
+        // 2. 口コミを取得 (型定義 Review を適用)
         const { data: revData, error: revError } = await supabase
           .from("reviews")
           .select("*")
@@ -54,28 +63,30 @@ function ResultContent() {
         const currentReviews = (revData || []) as Review[];
         setReviews(currentReviews);
 
-        // 2. Gemini APIを呼び出し
-        const advice = await getAiAdvice(companyName, budget, answers, currentReviews);
+        // 3. Gemini APIを呼び出し
+        const advice = await getAiAdvice(companyName, budget, answers);
         setAiAdvice(advice);
+
       } catch (err: any) {
-        console.error(err);
-        setAiAdvice("診断結果を生成できませんでした。");
-        alert("データの取得中にエラーが発生しました。"); // フィードバック
+        console.error("Diagnosis error:", err);
+        setAiAdvice("診断結果の生成中にエラーが発生しました。");
+        alert("エラーが発生しました: " + (err.message || "不明なエラー"));
       } finally {
         setLoadingReviews(false);
       }
     };
 
     runDiagnosis();
-    // 【重要】依存配列から supabase を削除して無限ループを防ぐ
-  }, [companyName, budget]); 
+
+    // 【修正の核心】依存配列を空にする、もしくはプリミティブな値(値が変わらないもの)のみにする
+    // supabaseを含めると、レンダリングのたびに新しいインスタンスと判定され無限ループします。
+  }, [companyName, budget, router]); // supabaseを配列から削除
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      {/* (省略: ヘッダー部分) */}
       <div className="text-center space-y-2">
-         <h1 className="text-3xl font-bold text-gray-900">{companyName} 様の分析結果</h1>
-         <p className="text-gray-500">AIが導き出した最適なポートフォリオです</p>
+        <h1 className="text-3xl font-bold text-gray-900">{companyName} 様の分析結果</h1>
+        <p className="text-gray-500">AIが導き出した最適なポートフォリオです</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -86,10 +97,31 @@ function ResultContent() {
             </h2>
             <p className="text-lg leading-relaxed opacity-90 whitespace-pre-wrap">{aiAdvice}</p>
           </div>
-          {/* (予算配分グラフ表示部分はそのまま) */}
+
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-             <h3 className="font-bold text-gray-800 mb-4 text-sm">推奨予算配分シミュレーション</h3>
-             {/* ... */}
+            <h3 className="font-bold text-gray-800 mb-4 text-sm">推奨予算配分シミュレーション</h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span>メイン媒体 ({answers[1] || '推奨'})</span>
+                  <span className="font-bold">70%</span>
+                </div>
+                <div className="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+                  <div className="bg-blue-500 h-full" style={{ width: '70%' }}></div>
+                </div>
+                <p className="text-right text-sm font-bold text-blue-600 mt-1">¥{allocation.primary.toLocaleString()}</p>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span>サブ/テスト運用</span>
+                  <span className="font-bold">30%</span>
+                </div>
+                <div className="w-full bg-gray-100 h-4 rounded-full overflow-hidden">
+                  <div className="bg-blue-300 h-full" style={{ width: '30%' }}></div>
+                </div>
+                <p className="text-right text-sm font-bold text-blue-400 mt-1">¥{allocation.secondary.toLocaleString()}</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -106,14 +138,13 @@ function ResultContent() {
         </div>
       </div>
 
-      {/* 関連口コミセクション */}
       <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <span className="mr-2">🤝</span> あなたに近い事例
         </h2>
         
         {loadingReviews ? (
-          <div className="py-10 text-center text-gray-400">データを読み込み中...</div>
+          <div className="text-center py-10 text-gray-400">データを読み込み中...</div>
         ) : (
           <div className="grid md:grid-cols-3 gap-4">
             {reviews.map((rev) => (
@@ -135,10 +166,14 @@ function ResultContent() {
           </div>
         )}
       </div>
-      {/* (省略: フッターボタン部分) */}
+
       <div className="flex justify-center pt-4 gap-4">
-         <button onClick={() => router.push('/home')} className="px-8 py-3 bg-white border border-gray-300 text-gray-600 rounded-full font-bold">一覧へ</button>
-         <button onClick={() => router.push('/home/new')} className="px-8 py-3 bg-gray-900 text-white rounded-full font-bold">再シミュレーション</button>
+        <button onClick={() => router.push('/home')} className="px-8 py-3 bg-white border border-gray-300 text-gray-600 rounded-full font-bold hover:bg-gray-50 transition-all">
+          一覧へ
+        </button>
+        <button onClick={() => router.push('/home/new')} className="px-8 py-3 bg-gray-900 text-white rounded-full font-bold hover:bg-gray-800 transition-all shadow-lg">
+          再シミュレーション
+        </button>
       </div>
     </div>
   );
@@ -146,7 +181,7 @@ function ResultContent() {
 
 export default function ResultPage() {
   return (
-    <Suspense fallback={<div>分析中...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">分析中...</div>}>
       <ResultContent />
     </Suspense>
   );
