@@ -20,7 +20,7 @@ export default function NewReviewPage() {
     target_audience: "",
     result_description: "",
     roi_rating: "3",
-    service_url: "", // ← 追加
+    simulation_link: "", // ← 変更
   });
 
   const AD_METHODS = [
@@ -72,7 +72,7 @@ export default function NewReviewPage() {
           target_audience: reviewData.target_audience,
           result_description: reviewData.result_description,
           roi_rating: Number(reviewData.roi_rating),
-          service_url: reviewData.service_url, // ← 追加
+          simulation_link: reviewData.simulation_link || null, // ← 変更
         },
       ]);
 
@@ -153,11 +153,11 @@ export default function NewReviewPage() {
           </label>
           <input
             type="url"
-            value={reviewData.service_url}
+            value={reviewData.simulation_link}
             onChange={(e) =>
               setReviewData({
                 ...reviewData,
-                service_url: e.target.value,
+                simulation_link: e.target.value,
               })
             }
             placeholder="https://example.com"

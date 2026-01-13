@@ -17,8 +17,7 @@ type Review = {
   result_description: string;
   roi_rating: number;
   created_at: string;
-  service_url?: string;
-  simulation_link?: string; // ← 追加
+  simulation_link?: string; // ← service_url を廃止してこれだけに
 };
 
 export default function ReviewDetailPage() {
@@ -116,24 +115,9 @@ export default function ReviewDetailPage() {
           <h1 className="text-3xl font-bold mb-2">{review.company_name}</h1>
           <p className="text-gray-600">業界：{review.industry}</p>
 
-          {/* サービスURL */}
-          {review.service_url && (
-            <p className="mt-2">
-              <span className="font-semibold mr-2">公式サイト：</span>
-              <a
-                href={review.service_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline hover:text-blue-800 break-all"
-              >
-                {review.service_url}
-              </a>
-            </p>
-          )}
-
-          {/* 実施シミュレーションリンク 追加 */}
+          {/* 実施シミュレーションリンク */}
           {review.simulation_link && (
-            <p className="mt-1">
+            <p className="mt-2">
               <span className="font-semibold mr-2">
                 実施シミュレーションリンク：
               </span>

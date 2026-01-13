@@ -23,7 +23,7 @@ export default function EditReviewPage() {
     target_audience: "",
     result_description: "",
     roi_rating: "3",
-    simulation_link: "", // 追加
+    simulation_link: "", // ← 統一
   });
 
   const AD_METHODS = [
@@ -50,15 +50,15 @@ export default function EditReviewPage() {
       }
 
       setReview({
-        company_name: data.company_name,
-        industry: data.industry,
-        budget: String(data.budget),
-        ad_methods: data.ad_methods || [],
-        ad_purpose: data.ad_purpose || "購買",
-        target_audience: data.target_audience || "",
-        result_description: data.result_description,
-        roi_rating: String(data.roi_rating),
-        simulation_link: data.simulation_link || "", // 追加
+        company_name: data.company_name ?? "",
+        industry: data.industry ?? "",
+        budget: String(data.budget ?? ""),
+        ad_methods: data.ad_methods ?? [],
+        ad_purpose: data.ad_purpose ?? "購買",
+        target_audience: data.target_audience ?? "",
+        result_description: data.result_description ?? "",
+        roi_rating: String(data.roi_rating ?? "3"),
+        simulation_link: data.simulation_link ?? "", // ← ここも統一
       });
 
       setLoading(false);
@@ -98,7 +98,7 @@ export default function EditReviewPage() {
         target_audience: review.target_audience,
         result_description: review.result_description,
         roi_rating: Number(review.roi_rating),
-        simulation_link: review.simulation_link, // 追加
+        simulation_link: review.simulation_link, // ← 統一
       })
       .eq("id", reviewId);
 
@@ -173,7 +173,7 @@ export default function EditReviewPage() {
           />
         </div>
 
-        {/* 実施シミュレーションリンク ここ追加 */}
+        {/* 実施シミュレーションリンク */}
         <div>
           <label className="block text-sm font-medium mb-1">
             実施シミュレーションリンク
