@@ -23,6 +23,7 @@ export default function EditReviewPage() {
     target_audience: "",
     result_description: "",
     roi_rating: "3",
+    simulation_link: "", // 追加
   });
 
   const AD_METHODS = [
@@ -57,6 +58,7 @@ export default function EditReviewPage() {
         target_audience: data.target_audience || "",
         result_description: data.result_description,
         roi_rating: String(data.roi_rating),
+        simulation_link: data.simulation_link || "", // 追加
       });
 
       setLoading(false);
@@ -79,7 +81,6 @@ export default function EditReviewPage() {
     setSaving(true);
     setMessage("");
 
-    // バリデーション: 広告手法が1つも選択されていない場合
     if (review.ad_methods.length === 0) {
       setMessage("❌ 広告手法を最低1つ選択してください");
       setSaving(false);
@@ -97,6 +98,7 @@ export default function EditReviewPage() {
         target_audience: review.target_audience,
         result_description: review.result_description,
         roi_rating: Number(review.roi_rating),
+        simulation_link: review.simulation_link, // 追加
       })
       .eq("id", reviewId);
 
@@ -109,13 +111,13 @@ export default function EditReviewPage() {
     setSaving(false);
   };
 
-  if (loading) {
-    return <p className="p-6">読み込み中...</p>;
-  }
-
   const handleCancel = () => {
     router.back();
   };
+
+  if (loading) {
+    return <p className="p-6">読み込み中...</p>;
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -168,6 +170,22 @@ export default function EditReviewPage() {
             value={review.budget}
             onChange={(e) => setReview({ ...review, budget: e.target.value })}
             required
+          />
+        </div>
+
+        {/* 実施シミュレーションリンク ここ追加 */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            実施シミュレーションリンク
+          </label>
+          <input
+            type="url"
+            className="w-full border px-3 py-2 rounded"
+            value={review.simulation_link}
+            onChange={(e) =>
+              setReview({ ...review, simulation_link: e.target.value })
+            }
+            placeholder="https://example.com"
           />
         </div>
 

@@ -17,6 +17,8 @@ type Review = {
   result_description: string;
   roi_rating: number;
   created_at: string;
+  service_url?: string;
+  simulation_link?: string; // ← 追加
 };
 
 export default function ReviewDetailPage() {
@@ -113,6 +115,39 @@ export default function ReviewDetailPage() {
         <div className="mb-6 border-b pb-4">
           <h1 className="text-3xl font-bold mb-2">{review.company_name}</h1>
           <p className="text-gray-600">業界：{review.industry}</p>
+
+          {/* サービスURL */}
+          {review.service_url && (
+            <p className="mt-2">
+              <span className="font-semibold mr-2">公式サイト：</span>
+              <a
+                href={review.service_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800 break-all"
+              >
+                {review.service_url}
+              </a>
+            </p>
+          )}
+
+          {/* 実施シミュレーションリンク 追加 */}
+          {review.simulation_link && (
+            <p className="mt-1">
+              <span className="font-semibold mr-2">
+                実施シミュレーションリンク：
+              </span>
+              <a
+                href={review.simulation_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800 break-all"
+              >
+                {review.simulation_link}
+              </a>
+            </p>
+          )}
+
           <p className="text-sm text-gray-400 mt-2">
             投稿日：{new Date(review.created_at).toLocaleDateString()}
           </p>
