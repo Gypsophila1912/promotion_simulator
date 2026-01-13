@@ -146,9 +146,11 @@ export default function NewReviewPage() {
           />
         </div>
 
-        {/* サービスURL */}
+        {/* 実施シミュレーションリンク */}
         <div>
-          <label className="block text-sm font-medium mb-1">サービスURL</label>
+          <label className="block text-sm font-medium mb-1">
+            実施シミュレーションリンク
+          </label>
           <input
             type="url"
             value={reviewData.service_url}
