@@ -121,9 +121,9 @@ function ResultContent() {
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="font-bold text-gray-800 truncate mr-2">{rev.company_name}</span>
-                    <span className="text-yellow-500 font-bold">★{rev.roi_rating}</span>
+                    <span className="text-yellow-500 font-bold">★{rev.rating}</span>
                   </div>
-                  <p className="text-gray-600 leading-tight mb-3 line-clamp-3 italic">"{rev.result_description}"</p>
+                  <p className="text-gray-600 leading-tight mb-3 line-clamp-3 italic">"{rev.comment}"</p>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {Array.isArray(rev.ad_methods) && rev.ad_methods.map((m: string) => (
