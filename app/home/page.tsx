@@ -1,57 +1,56 @@
 "use client";
-import React, { useState } from 'react';
-"use client";
-import React, { useState } from 'react';
-import Link from 'next/link';
 
-export default function HomePage() {
-  const [companyName, setCompanyName] = useState('');
-  const [budget, setBudget] = useState('');
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
+export default function HistoryPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [histories, setHistories] = useState<any[]>([]);
+
+  // Supabaseから過去の診断データを取得
+  useEffect(() => {
+    const fetchHistories = async () => {
+      const { data, error } = await supabase
+        .from('ad_diagnoses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data) setHistories(data);
+    };
+    fetchHistories();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">ホーム画面</h1>
-        
-        {/* onSubmitは不要になるのでdivに変更してもOKです */}
-        <div className="space-y-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">会社名</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="株式会社〇〇"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </div>
-            <div className="w-1/3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">予算</label>
-              <input
-                type="number"
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="金額"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-              />
-            </div>
-          </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold text-gray-800">シミュレーション一覧</h1>
+        <button
+          onClick={() => router.push('/home/new')} // 入力画面へ
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md"
+        >
+          新規作成
+        </button>
+      </div>
 
-          {/* 送信ボタン（質問へ） */}
-          {/* queryを使って、入力した会社名と予算を次のページへ送る設定です */}
-          <Link 
-            href={{
-              pathname: "/home/question",
-              query: { company: companyName, budget: budget }
-            }} 
-            className="block w-full"
-          >
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200">
-              質問へ
-            </button>
-          </Link>
-        </div>
+      <div className="grid gap-4">
+        {histories.length > 0 ? (
+          histories.map((item) => (
+            <div key={item.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{item.company_name}</h2>
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>投資カテゴリー: {item.answers?.[1] || '未設定'}</p>
+                <p>予算: {Number(item.budget).toLocaleString()}円</p>
+                <p className="pt-2 text-xs text-gray-300">
+                  {new Date(item.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-gray-400 py-20">データがありません。「新規作成」から始めましょう！</p>
+        )}
       </div>
     </div>
   );

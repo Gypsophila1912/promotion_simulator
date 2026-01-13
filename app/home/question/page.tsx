@@ -43,10 +43,7 @@ function QuestionContent() {
       // 1 & Supabase: 全質問終了時にデータを保存
       setIsSubmitting(true);
       try {
-       setIsSubmitting(true);
-       try {
-         
-         // 実際のSupabase保存処理
+        console.log("Supabaseに保存中...", { companyName, budget, newAnswers });
         
         // 実際のSupabase保存処理
         const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
@@ -86,7 +83,7 @@ function QuestionContent() {
         {/* 上部に現在の情報を小さく表示（引き継ぎ確認用） */}
         <div className="flex justify-between text-xs text-gray-400 mb-4">
           <span>会社: {companyName}</span>
-          <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}円</span>
+          <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}万円</span>
         </div>
 
         <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
