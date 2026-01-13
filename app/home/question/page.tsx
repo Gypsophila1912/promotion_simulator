@@ -17,7 +17,6 @@ function QuestionContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   
-  // 3. 前の画面からのデータ（会社名・予算）を受け取る
   const companyName = searchParams.get('company') || '';
   const budget = searchParams.get('budget') || '';
 
@@ -25,7 +24,6 @@ function QuestionContent() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 2. 入力チェック（会社名や予算がない場合はホームに戻す）
   useEffect(() => {
     if (!companyName || !budget) {
       alert("会社名と予算を最初に入力してください。");
@@ -40,25 +38,23 @@ function QuestionContent() {
     if (currentStep < QUESTIONS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // 1 & Supabase: 全質問終了時にデータを保存
       setIsSubmitting(true);
       try {
-        console.log("Supabaseに保存中...", { companyName, budget, newAnswers });
-        
-        // 実際のSupabase保存処理
-        const { error } = await supabase.from('ad_diagnoses') // ここに確認したテーブル名を入れる
+        // 【修正】現在のログインユーザーを取得
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("認証が必要です");
+
+        // 【修正】user_id を含めて保存
+        const { error } = await supabase.from('ad_diagnoses')
         .insert([{ 
-        company_name: companyName, 
-        budget: parseInt(budget, 10) || 0, 
-        answers: newAnswers // 配列のまま保存（SQL側でjsonb型にしているため）
-    }]);
+          user_id: user.id, // 指摘箇所の修正
+          company_name: companyName, 
+          budget: parseInt(budget, 10) || 0, 
+          answers: newAnswers 
+        }]);
 
-    if (error) {
-        console.error("エラー内容:", error.message);
-        throw error;
-    }
+        if (error) throw error;
 
-        // データの引き継ぎ：URLパラメータに回答も含めて結果ページへ
         const query = new URLSearchParams({
           company: companyName,
           budget: budget,
@@ -66,8 +62,8 @@ function QuestionContent() {
         }).toString();
         
         router.push(`/home/result?${query}`);
-      } catch (error) {
-        alert("保存に失敗しました");
+      } catch (error: any) {
+        alert(`保存に失敗しました: ${error.message}`); // フィードバック追加
       } finally {
         setIsSubmitting(false);
       }
@@ -79,8 +75,6 @@ function QuestionContent() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-        
-        {/* 上部に現在の情報を小さく表示（引き継ぎ確認用） */}
         <div className="flex justify-between text-xs text-gray-400 mb-4">
           <span>会社: {companyName}</span>
           <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}万円</span>
@@ -110,8 +104,6 @@ function QuestionContent() {
             </button>
           ))}
         </div>
-
-        {/* 4. やり直すボタンの挙動修正 */}
         <div className="mt-8 text-center">
           <button
             onClick={() => router.push('/home')}
@@ -124,16 +116,10 @@ function QuestionContent() {
     </div>
   );
 }
+
 export default function QuestionPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-500">読み込み中...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
       <QuestionContent />
     </Suspense>
   );

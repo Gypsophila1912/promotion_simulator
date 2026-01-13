@@ -21,6 +21,7 @@ export interface Review {
   comment: string;
   created_at: string;
   updated_at: string;
+  ad_methods: string[] | any;
 }
 
 // フォーム用の型
