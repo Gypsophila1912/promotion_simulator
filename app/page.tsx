@@ -5,132 +5,147 @@ export default async function HomePage() {
   const user = await getUser();
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-50">
-      {/* 背景装飾：データの整合性を象徴するグリッドパターン */}
-      <div className="absolute inset-0 z-0 opacity-[0.03]" 
-           style={{ backgroundImage: 'radial-gradient(#444cf7 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}>
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#FFFBF5] text-slate-600 font-sans selection:bg-orange-200">
+      
+      {/* 1. 背景のアニメーション装飾 */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* グリッド背景 */}
+        <div className="absolute inset-0 opacity-40" 
+             style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
+        </div>
+        {/* ふわふわ動く光のオーブ */}
+        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-orange-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-blue-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-[-20%] left-[20%] w-[800px] h-[800px] bg-pink-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* メインコンテンツ */}
+      {/* 2. メインコンテンツ */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
-        <main className="mx-auto max-w-4xl text-center">
-          
-          {/* 信頼の証（バッジ） */}
-          <div className="mb-8 flex justify-center">
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-600 ring-1 ring-inset ring-blue-600/20">
-              Promotion Simulator Beta
+        
+        {/* ヘッダーバッジ */}
+        <div className="mb-8 transform transition-all hover:scale-105 cursor-default">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-sm px-4 py-2 text-sm font-black text-slate-600 shadow-sm border border-white ring-1 ring-slate-100">
+            <span className="flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
             </span>
-          </div>
+            AI Budget Simulator Beta
+          </span>
+        </div>
 
-          {/* メインコピー */}
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl">
-            広告予算の最適解を、<br />
-            <span className="text-blue-600">瞬時にシミュレーション。</span>
+        {/* キャッチコピー */}
+        <div className="text-center max-w-4xl mx-auto mb-12">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-800 mb-6 leading-[1.1]">
+            経営の<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500">迷い</span>を、<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-400">確信</span>に変える。
           </h1>
-
-          {/* サブコピー */}
-          <p className="mt-6 text-lg leading-8 text-slate-600 mb-12">
-            複雑な媒体ごとの予算配分に、もう迷う必要はありません。<br className="hidden sm:block" />
-            データに基づいた予測分析で、ROI（投資対効果）を最大化する意思決定をサポートします。
+          <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+            広告、採用、運営費...。<br className="md:hidden"/>
+            複雑な予算パズルをAIが解き明かし、<br />
+            あなたのビジネスに「最短ルート」を提案します。
           </p>
+        </div>
 
-          {/* グラフ風ビジュアル（CSSで描画） */}
-          <div className="relative mx-auto max-w-2xl mb-12 p-6 bg-white rounded-2xl shadow-xl ring-1 ring-slate-200/60 overflow-hidden">
-            {/* グラフの背景グリッド線 */}
-            <div className="absolute inset-0 flex flex-col justify-between p-6 opacity-20 pointer-events-none">
-              <div className="border-t border-dashed border-slate-300 w-full h-0"></div>
-              <div className="border-t border-dashed border-slate-300 w-full h-0"></div>
-              <div className="border-t border-dashed border-slate-300 w-full h-0"></div>
-              <div className="border-t border-dashed border-slate-300 w-full h-0"></div>
-              <div className="border-t border-gray-300 w-full h-0"></div> {/* ベースライン */}
-            </div>
-            
-            <div className="relative flex items-end justify-between h-48 sm:h-64 px-4 pt-8 pb-2 gap-3 sm:gap-6 z-10">
-              {/* 棒グラフ1: 現状 */}
-              <div className="relative flex flex-col items-center justify-end w-full h-full group">
-                <div className="mb-2 text-xs font-bold text-slate-500">現状</div>
-                <div className="w-full bg-slate-200 rounded-t-lg h-[40%] relative overflow-hidden">
-                  <div className="absolute bottom-0 left-0 right-0 h-full bg-gradient-to-t from-slate-300 to-slate-200 opacity-50"></div>
-                </div>
-              </div>
-              {/* 棒グラフ2: 改善案A */}
-              <div className="relative flex flex-col items-center justify-end w-full h-full group">
-                <div className="mb-2 text-xs font-bold text-blue-500">案A</div>
-                <div className="w-full bg-blue-400 rounded-t-lg h-[65%] relative overflow-hidden shadow-sm transition-all group-hover:h-[68%]">
-                   <div className="absolute bottom-0 left-0 right-0 h-full bg-gradient-to-t from-blue-500 to-blue-300 opacity-60"></div>
-                </div>
-              </div>
-               {/* 棒グラフ3: 改善案B（最適解） */}
-              <div className="relative flex flex-col items-center justify-end w-full h-full group">
-                 {/* 強調表示のバッジ */}
-                 <div className="absolute -top-10 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm animate-bounce">
-                  最適解
-                </div>
-                <div className="mb-2 text-sm font-extrabold text-blue-600">案B</div>
-                <div className="w-full bg-blue-600 rounded-t-lg h-[90%] relative overflow-hidden shadow-md transition-all group-hover:h-[92%]">
-                  {/* 内部の光沢感 */}
-                  <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/30 to-transparent"></div>
-                   <div className="absolute bottom-0 left-0 right-0 h-full bg-gradient-to-t from-blue-700 to-blue-500 opacity-80"></div>
-                </div>
-              </div>
-            </div>
-            {/* 上昇トレンドライン（SVG） */}
-             <svg className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 z-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 {/* 線の下のグラデーション領域 */}
-                <path d="M0,100 L0,60 C20,55 40,45 60,35 C80,25 100,10 100,10 L100,100 Z" fill="url(#trendGradient)" className="opacity-20" />
-                {/* トレンドライン本体 */}
-                <path d="M0,60 C20,55 40,45 60,35 C80,25 100,10 100,10" stroke="#2563eb" strokeWidth="2" fill="none" strokeLinecap="round" className="drop-shadow-sm" />
-                 {/* 終点のポイント */}
-                <circle cx="100" cy="10" r="3" fill="#2563eb" className="animate-pulse" />
-                 <defs>
-                    <linearGradient id="trendGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.5" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                    </linearGradient>
-                </defs>
-            </svg>
+        {/* アクションボタン */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-20">
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="group relative px-8 py-4 bg-slate-800 rounded-full text-white font-bold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <span className="relative flex items-center gap-2">
+                ダッシュボードへ戻る <span className="text-xl">🚀</span>
+              </span>
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/auth/signup"
+                className="group relative px-10 py-5 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full text-white font-black text-lg shadow-[0_10px_30px_-10px_rgba(249,115,22,0.6)] hover:shadow-[0_20px_40px_-10px_rgba(249,115,22,0.7)] hover:-translate-y-1 transition-all"
+              >
+                <span className="flex items-center gap-2">
+                  無料でシミュレーション <span className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">➜</span>
+                </span>
+                {/* キラリと光るエフェクト */}
+                <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 group-hover:animate-shine"></div>
+              </Link>
+              
+              <Link
+                href="/auth/login"
+                className="px-10 py-5 bg-white rounded-full text-slate-600 font-bold text-lg shadow-sm border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all"
+              >
+                ログイン
+              </Link>
+            </>
+          )}
+        </div>
 
-            <div className="absolute bottom-4 right-6 text-xs font-bold text-blue-600/60">
-                ↑ 収益最大化シミュレーション結果例
-            </div>
+        {/* 3. ビジュアルデモエリア（浮遊する要素） */}
+        <div className="relative w-full max-w-5xl h-[400px] perspective-1000">
+          
+          {/* 中央：PC画面のようなメインビジュアル */}
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full max-w-3xl bg-white rounded-t-3xl shadow-2xl border-4 border-white ring-1 ring-slate-100 p-2 md:p-4 overflow-hidden transform rotate-x-12 origin-bottom transition-transform hover:rotate-x-0 duration-700">
+             <div className="bg-slate-50 w-full h-[300px] rounded-t-2xl flex items-end justify-center gap-4 pb-0 overflow-hidden relative">
+                {/* グラフアニメーション */}
+                <div className="w-16 bg-blue-200 h-[40%] rounded-t-lg animate-[grow_2s_ease-out_forwards]"></div>
+                <div className="w-16 bg-blue-300 h-[60%] rounded-t-lg animate-[grow_2s_ease-out_0.2s_forwards]"></div>
+                <div className="w-16 bg-orange-400 h-[85%] rounded-t-lg animate-[grow_2s_ease-out_0.4s_forwards] relative shadow-lg">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-md text-xs font-bold text-orange-500 whitespace-nowrap animate-bounce">
+                    Best! 👑
+                  </div>
+                </div>
+                <div className="w-16 bg-blue-200 h-[50%] rounded-t-lg animate-[grow_2s_ease-out_0.6s_forwards]"></div>
+
+                {/* 背景のグリッド線 */}
+                <div className="absolute inset-0 border-b border-slate-200 pointer-events-none" style={{ backgroundSize: '100% 20%', backgroundImage: 'linear-gradient(to bottom, transparent 98%, #e2e8f0 100%)' }}></div>
+             </div>
           </div>
 
-          {/* アクションエリア */}
-          <div className="mt-8 flex items-center justify-center gap-x-6">
-            {user ? (
-              // ログイン済みユーザー向け
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-sm text-slate-500">
-                  おかえりなさいませ、{user.email} 様
-                </p>
-                <Link
-                  href="/dashboard"
-                  className="rounded-lg bg-blue-600 px-8 py-4 text-base font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/30 active:scale-95"
-                >
-                  ダッシュボードへ移動する
-                </Link>
-              </div>
-            ) : (
-              // 未ログインユーザー向け
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <Link
-                  href="/auth/signup"
-                  className="rounded-lg bg-blue-600 px-8 py-3.5 text-base font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
-                >
-                  無料でシミュレーションを始める
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="group rounded-lg px-8 py-3.5 text-base font-semibold text-slate-700 ring-1 ring-slate-200 transition-all hover:bg-white hover:text-blue-600 hover:ring-blue-200 hover:shadow-sm"
-                >
-                  ログイン <span aria-hidden="true" className="inline-block transition-transform group-hover:translate-x-1">→</span>
-                </Link>
-              </div>
-            )}
+          {/* 周囲に浮遊するカード（赤を排除し、ポジティブな色へ） */}
+          <div className="absolute top-10 left-[5%] md:left-[10%] animate-[float_6s_ease-in-out_infinite]">
+             <div className="bg-white p-3 rounded-2xl shadow-xl flex items-center gap-3 transform -rotate-6 hover:rotate-0 transition-transform cursor-default">
+                <span className="text-2xl bg-green-100 p-2 rounded-full">📈</span>
+                <div>
+                  <div className="text-xs text-slate-400 font-bold">GROWTH</div>
+                  <div className="text-sm font-black text-slate-700">+120% UP</div>
+                </div>
+             </div>
           </div>
 
-        </main>
+          <div className="absolute top-20 right-[5%] md:right-[10%] animate-[float_7s_ease-in-out_infinite_1s]">
+             <div className="bg-white p-3 rounded-2xl shadow-xl flex items-center gap-3 transform rotate-6 hover:rotate-0 transition-transform cursor-default">
+                <span className="text-2xl bg-blue-100 p-2 rounded-full">⚡</span>
+                <div>
+                  <div className="text-xs text-slate-400 font-bold">SPEED</div>
+                  <div className="text-sm font-black text-slate-700">即時分析</div>
+                </div>
+             </div>
+          </div>
+
+        </div>
+
       </div>
+
+      {/* アニメーション定義 */}
+      <style>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        @keyframes shine {
+          100% { left: 125%; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+          50% { transform: translateY(-20px) rotate(var(--r, 0deg)); }
+        }
+        @keyframes grow {
+          from { height: 0; }
+        }
+      `}</style>
     </div>
   );
 }
