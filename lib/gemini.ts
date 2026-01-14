@@ -1,5 +1,5 @@
 export async function getAiAdvice(companyName: string, budget: number, answers: string[]) {
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim();
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) return "APIキーが設定されていません。";
 
   // 【修正ポイント1】APIバージョンを v1beta から v1 に変更（より安定しています）
