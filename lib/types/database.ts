@@ -23,6 +23,15 @@ export interface Review {
   updated_at: string;
   ad_methods: string[] | any;
 }
+export interface DiagnosisHistory {
+  id: string;
+  user_id: string;
+  company_name: string;
+  budget: number;
+  answers: string[];      
+  created_at: string;
+}
+
 
 // フォーム用の型
 export interface SimulationFormData {
@@ -36,4 +45,10 @@ export interface ReviewFormData {
   company_name: string;
   rating: number;
   comment: string;
+}
+
+export interface DiagnosisFormData {
+  company_name: string;
+  budget: number;
+  answers: string[];
 }

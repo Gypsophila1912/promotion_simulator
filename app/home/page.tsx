@@ -3,83 +3,94 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { DiagnosisHistory } from '@/lib/types/database';
 
-export default function HistoryPage() {
+export default function HomePage() {
   const router = useRouter();
   const supabase = createClient();
-  const [histories, setHistories] = useState<any[]>([]);
 
-  // Supabaseから過去の診断データを取得
+  const [histories, setHistories] = useState<DiagnosisHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("");
+
   useEffect(() => {
-    const fetchHistories = async () => {
-      const { data, error } = await supabase
-        .from('ad_diagnoses')
-        .select('*')
-        .order('created_at', { ascending: false });
+    const fetchUserDataAndHistories = async () => {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
 
-      if (!error && data) setHistories(data);
+        setUserName(user.user_metadata?.full_name || user.email || "ユーザー");
+
+        const { data, error } = await supabase
+          .from('ad_diagnoses')
+          .select('*')
+          .eq('user_id', user.id) // セキュリティ対策
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setHistories(data || []);
+
+      } catch (error: any) {
+        console.error("Fetch Error:", error.message);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchHistories();
-  }, [supabase]);
 
-  // --- 追加：クリック時に結果ページへ遷移する関数 ---
-  const handleCardClick = (item: any) => {
-    const query = new URLSearchParams({
-      company: item.company_name,
-      budget: String(item.budget),
-      // answersは配列なので文字列にして渡す
-      answers: JSON.stringify(item.answers || [])
-    }).toString();
-
-    router.push(`/home/result?${query}`);
-  };
+    fetchUserDataAndHistories();
+  }, [router]); // supabaseを依存配列から削除して無限ループを防止
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">シミュレーション一覧</h1>
-        <button
-          onClick={() => router.push('/home/new')} 
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md transition-colors"
-        >
-          新規作成
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">こんにちは、{userName} さん</h1>
+        <button onClick={() => router.push('/home/new')} className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">
+          新規診断
         </button>
       </div>
 
-      <div className="grid gap-4">
-        {histories.length > 0 ? (
-          histories.map((item) => (
-            <div 
-              key={item.id} 
-              // クリックイベントを追加
-              onClick={() => handleCardClick(item)}
-              className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
-                    {item.company_name}
-                  </h2>
-                  <div className="text-sm text-gray-500 space-y-1">
-                    <p>投資カテゴリー: <span className="text-gray-700 font-medium">{item.answers?.[1] || '未設定'}</span></p>
-                    <p>予算: <span className="text-gray-700 font-medium">{Number(item.budget).toLocaleString()}円</span></p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-300 mb-2">
-                    {new Date(item.created_at).toLocaleDateString()}
-                  </p>
-                  <span className="text-blue-500 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                    結果を見る →
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-gray-400">読み込み中...</div>
         ) : (
-          <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
-            <p className="text-gray-400">データがありません。「新規作成」から始めましょう！</p>
-          </div>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-xs">
+                <th className="p-4">実施日</th>
+                <th className="p-4">会社名</th>
+                <th className="p-4">予算</th>
+                <th className="p-4"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {histories.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 group">
+                  <td className="p-4 text-sm">{new Date(item.created_at).toLocaleDateString()}</td>
+                  <td className="p-4 font-bold">{item.company_name}</td>
+                  <td className="p-4">¥{item.budget.toLocaleString()}</td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => {
+                        const query = new URLSearchParams({
+                          company: item.company_name,
+                          budget: item.budget.toString(),
+                          answers: JSON.stringify(item.answers)
+                        }).toString();
+                        router.push(`/home/result?${query}`);
+                      }}
+                      className="text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      結果を見る
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </div>

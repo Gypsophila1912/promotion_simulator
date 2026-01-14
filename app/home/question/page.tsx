@@ -24,13 +24,6 @@ function QuestionContent() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!companyName || !budget) {
-      alert("会社名と予算を最初に入力してください。");
-      router.push('/home');
-    }
-  }, [companyName, budget, router]);
-
   const handleSelect = async (option: string) => {
     const newAnswers = [...answers, option];
     setAnswers(newAnswers);
@@ -40,14 +33,13 @@ function QuestionContent() {
     } else {
       setIsSubmitting(true);
       try {
-        // 【修正】現在のログインユーザーを取得
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("認証が必要です");
 
-        // 【修正】user_id を含めて保存
+        // user_id を追加して保存
         const { error } = await supabase.from('ad_diagnoses')
         .insert([{ 
-          user_id: user.id, // 指摘箇所の修正
+          user_id: user.id, 
           company_name: companyName, 
           budget: parseInt(budget, 10) || 0, 
           answers: newAnswers 
@@ -63,7 +55,7 @@ function QuestionContent() {
         
         router.push(`/home/result?${query}`);
       } catch (error: any) {
-        alert(`保存に失敗しました: ${error.message}`); // フィードバック追加
+        alert(`保存に失敗しました: ${error.message}`);
       } finally {
         setIsSubmitting(false);
       }
@@ -74,43 +66,19 @@ function QuestionContent() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-        <div className="flex justify-between text-xs text-gray-400 mb-4">
-          <span>会社: {companyName}</span>
-          <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}万円</span>
-        </div>
-
-        <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
-          <div 
-            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${((currentStep + 1) / QUESTIONS.length) * 100}%` }}
-          ></div>
-        </div>
-
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-gray-800 mt-2">{currentQ.question}</h2>
-        </div>
-
+      <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <h2 className="text-2xl font-bold text-center mb-10">{currentQ.question}</h2>
         <div className="grid gap-4">
           {currentQ.options.map((option, index) => (
             <button
               key={index}
               disabled={isSubmitting}
               onClick={() => handleSelect(option)}
-              className="w-full text-left p-4 rounded-xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center disabled:opacity-50"
+              className="w-full text-left p-4 rounded-xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50 transition-all disabled:opacity-50"
             >
-              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 mr-4 text-sm">{index + 1}</span>
-              <span className="text-gray-700 font-medium">{option}</span>
+              {option}
             </button>
           ))}
-        </div>
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => router.push('/home')}
-            className="text-gray-400 text-sm hover:text-gray-600 underline"
-          >
-            最初からやり直す
-          </button>
         </div>
       </div>
     </div>
@@ -119,7 +87,7 @@ function QuestionContent() {
 
 export default function QuestionPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
+    <Suspense fallback={<div>読み込み中...</div>}>
       <QuestionContent />
     </Suspense>
   );
