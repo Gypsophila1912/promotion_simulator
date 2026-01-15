@@ -65,7 +65,7 @@ export default async function HomePage() {
                 className="group relative px-10 py-5 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full text-white font-black text-lg shadow-[0_10px_30px_-10px_rgba(249,115,22,0.6)] hover:shadow-[0_20px_40px_-10px_rgba(249,115,22,0.7)] hover:-translate-y-1 transition-all"
               >
                 <span className="flex items-center gap-2">
-                  無料でシミュレーション <span className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">➜</span>
+                  今すぐシュミレーション<span className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">➜</span>
                 </span>
                 {/* キラリと光るエフェクト */}
                 <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 group-hover:animate-shine"></div>
