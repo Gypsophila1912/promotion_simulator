@@ -45,54 +45,60 @@ export default function HomePage() {
   }, [router]); // supabaseを依存配列から削除して無限ループを防止
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">こんにちは、{userName} さん</h1>
-        <button onClick={() => router.push('/home/new')} className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">
-          新規診断
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {loading ? (
-          <div className="p-10 text-center text-gray-400">読み込み中...</div>
-        ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 text-xs">
-                <th className="p-4">実施日</th>
-                <th className="p-4">会社名</th>
-                <th className="p-4">予算</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {histories.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 group">
-                  <td className="p-4 text-sm">{new Date(item.created_at).toLocaleDateString()}</td>
-                  <td className="p-4 font-bold">{item.company_name}</td>
-                  <td className="p-4">¥{item.budget.toLocaleString()}</td>
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => {
-                        const query = new URLSearchParams({
-                          id: item.id,
-                          company: item.company_name,
-                          budget: item.budget.toString(),
-                          answers: JSON.stringify(item.answers)
-                        }).toString();
-                        router.push(`/home/result?${query}`);
-                      }}
-                      className="text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      結果を見る
-                    </button>
-                  </td>
+    <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-100 py-10 px-2">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-center text-slate-800 mb-8 tracking-tight drop-shadow-sm">
+          こんにちは、<span className="text-blue-700">{userName}</span> さん
+        </h1>
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={() => router.push('/home/new')}
+            className="bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          >
+            ＋ 新規診断
+          </button>
+        </div>
+        <div className="bg-white/90 rounded-2xl shadow-xl border border-gray-100 overflow-x-auto">
+          {loading ? (
+            <div className="p-10 text-center text-gray-400">読み込み中...</div>
+          ) : (
+            <table className="w-full text-left border-collapse min-w-[600px]">
+              <thead>
+                <tr className="bg-gradient-to-r from-cyan-100 to-blue-100 text-blue-700 text-xs uppercase tracking-wider">
+                  <th className="p-4">実施日</th>
+                  <th className="p-4">会社名</th>
+                  <th className="p-4">予算</th>
+                  <th className="p-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {histories.map((item) => (
+                  <tr key={item.id} className="hover:bg-cyan-50 group transition">
+                    <td className="p-4 text-sm whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</td>
+                    <td className="p-4 font-bold text-slate-700 whitespace-nowrap">{item.company_name}</td>
+                    <td className="p-4 text-slate-600 whitespace-nowrap">¥{item.budget.toLocaleString()}</td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => {
+                          const query = new URLSearchParams({
+                            id: item.id,
+                            company: item.company_name,
+                            budget: item.budget.toString(),
+                            answers: JSON.stringify(item.answers)
+                          }).toString();
+                          router.push(`/home/result?${query}`);
+                        }}
+                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-4 py-2 rounded-full shadow-sm border border-blue-200 transition-all duration-150"
+                      >
+                        結果を見る
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );
