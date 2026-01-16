@@ -1,5 +1,20 @@
 // データベース型定義
 
+// 年代別予算配分
+export interface AgeAllocation {
+  "10代": number;
+  "20代": number;
+  "30代": number;
+  "40代": number;
+  "50代": number;
+  "60代以上": number;
+}
+
+// 月別予算配分
+export interface MonthAllocation {
+  [month: string]: number; // "1月": 50000 など
+}
+
 export interface Simulation {
   id: string;
   user_id: string;
@@ -9,6 +24,9 @@ export interface Simulation {
   details: string | null;
   analysis_result: Record<string, number> | null;
   ai_reasoning: string | null;
+  age_allocation: AgeAllocation | null; // 追加
+  month_allocation: MonthAllocation | null; // 追加
+  selected_months: string[] | null; // 追加
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +49,9 @@ export interface SimulationFormData {
   industry: string;
   budget: number;
   details?: string;
+  age_allocation?: AgeAllocation; // 追加
+  selected_months?: string[]; // 追加
+  regenerate_ai?: boolean; // 追加（編集時）
 }
 
 export interface ReviewFormData {
@@ -47,6 +68,21 @@ export interface InvestmentAllocation {
   reasoning: string; // このカテゴリーへの配分理由
 }
 
+// 年代別配分提案（AI生成時）
+export interface AgeAllocationProposal {
+  allocation: AgeAllocation;
+  reasoning: { [ageGroup: string]: string };
+  summary: string;
+}
+
+// 月別配分提案（AI生成時）
+export interface MonthAllocationProposal {
+  allocation: MonthAllocation;
+  reasoning: { [month: string]: string };
+  summary: string;
+  seasonalInsights: string;
+}
+
 export interface AIAnalysisResult {
   // パターン1: ユーザー指定カテゴリーベース
   userBased: {
@@ -61,5 +97,7 @@ export interface AIAnalysisResult {
     summary: string;
     recommendedCategories: string[]; // AIが提案した新しいカテゴリー
   };
+  ageAllocation?: AgeAllocationProposal; // 追加
+  monthAllocation?: MonthAllocationProposal; // 追加
   generatedAt: string; // 生成日時
 }

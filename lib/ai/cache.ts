@@ -46,12 +46,23 @@ function getBudgetRange(budget: number): string {
  *
  * @param industry - 投資カテゴリー
  * @param budgetRange - 予算範囲
+ * @param selectedMonths - 選択された月（任意）
  * @returns キャッシュキー
  */
-function getCacheKey(industry: string, budgetRange: string): string {
+function getCacheKey(
+  industry: string,
+  budgetRange: string,
+  selectedMonths?: string[]
+): string {
   // 業界名を正規化（大文字小文字、空白を統一）
   const normalizedIndustry = industry.trim().toLowerCase().replace(/\s+/g, "-");
-  return `${normalizedIndustry}:${budgetRange}`;
+
+  // 月が選択されている場合はソートして正規化
+  const monthsKey = selectedMonths && selectedMonths.length > 0
+    ? `:months-${selectedMonths.slice().sort().join(",")}`
+    : "";
+
+  return `${normalizedIndustry}:${budgetRange}${monthsKey}`;
 }
 
 /**
@@ -59,17 +70,19 @@ function getCacheKey(industry: string, budgetRange: string): string {
  *
  * @param industry - 投資カテゴリー
  * @param budget - 予算額
+ * @param selectedMonths - 選択された月（任意）
  * @returns キャッシュされた分析結果、または null
  */
 export function getCachedAnalysis(
   industry: string,
-  budget: number
+  budget: number,
+  selectedMonths?: string[]
 ): AIAnalysisResult | null {
   if (!CACHE_ENABLED) {
     return null;
   }
 
-  const key = getCacheKey(industry, getBudgetRange(budget));
+  const key = getCacheKey(industry, getBudgetRange(budget), selectedMonths);
   const cached = cache.get(key);
 
   if (!cached) {
@@ -102,17 +115,19 @@ export function getCachedAnalysis(
  * @param industry - 投資カテゴリー
  * @param budget - 予算額
  * @param result - 分析結果
+ * @param selectedMonths - 選択された月（任意）
  */
 export function setCachedAnalysis(
   industry: string,
   budget: number,
-  result: AIAnalysisResult
+  result: AIAnalysisResult,
+  selectedMonths?: string[]
 ): void {
   if (!CACHE_ENABLED) {
     return;
   }
 
-  const key = getCacheKey(industry, getBudgetRange(budget));
+  const key = getCacheKey(industry, getBudgetRange(budget), selectedMonths);
 
   // キャッシュサイズ制限チェック
   if (cache.size >= MAX_CACHE_SIZE && !cache.has(key)) {
