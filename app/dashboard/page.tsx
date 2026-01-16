@@ -1,4 +1,5 @@
 import { requireAuth } from "@/lib/auth/protected";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const user = await requireAuth();
@@ -17,6 +18,19 @@ export default async function DashboardPage() {
             <span className="font-semibold">登録日時:</span>{" "}
             {new Date(user.created_at).toLocaleString("ja-JP")}
           </p>
+        </div>
+
+        {/* テストページへのボタン */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            開発者ツール
+          </h3>
+          <Link
+            href="/test/db"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+          >
+            DB保存テストページ
+          </Link>
         </div>
       </div>
     </main>
