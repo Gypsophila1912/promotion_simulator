@@ -167,3 +167,45 @@ export async function callGeminiAPI(
 
   throw new Error(`Failed after all ${retries} retry attempts`);
 }
+
+/**
+ * ヒアリング結果に基づいてAIアドバイスを生成
+ * 
+ * @param companyName - 会社名
+ * @param budget - 予算
+ * @param answers - 質問への回答（配列）
+ * @returns AIが生成した戦略アドバイス
+ */
+export async function getAiAdvice(
+  companyName: string,
+  budget: number,
+  answers: string[]
+): Promise<string> {
+  const [targetAudience, adMedia, concerns, experience, kpi] = answers;
+
+  const prompt = `あなたはマーケティングの専門家です。以下のヒアリング結果に基づいて、具体的な戦略アドバイスを200文字程度で提案してください。
+
+【会社情報】
+- 会社名: ${companyName}
+- 予算: ${budget.toLocaleString()}円
+
+【ヒアリング結果】
+1. 主なターゲット層: ${targetAudience || '未回答'}
+2. 検討している広告媒体: ${adMedia || '未回答'}
+3. 現在の悩み: ${concerns || '未回答'}
+4. 運用経験: ${experience || '未回答'}
+5. 重視する成果（KPI）: ${kpi || '未回答'}
+
+具体的でわかりやすいアドバイスを簡潔にお願いします。`;
+
+  try {
+    const response = await callGeminiAPI(prompt, {
+      temperature: 0.7,
+      maxOutputTokens: 500,
+    });
+    return response;
+  } catch (error) {
+    console.error('AI advice generation failed:', error);
+    return 'AIアドバイスの生成中にエラーが発生しました。しばらくしてから再度お試しください。';
+  }
+}

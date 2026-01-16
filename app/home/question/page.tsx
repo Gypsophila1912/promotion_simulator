@@ -43,29 +43,38 @@ function QuestionContent() {
       // 全質問終了時にデータを保存
       setIsSubmitting(true);
       try {
-        // 実際のSupabase保存処理
-        const { error } = await supabase.from('ad_diagnoses')
+        // HomeDisplayのロジックを採用：認証ユーザーを取得
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("認証が必要です");
+
+        // user_id を追加して保存（セキュリティ対策）
+        // IDを取得するために.select('id').single()を追加
+        const { data, error } = await supabase.from('ad_diagnoses')
           .insert([{
+            user_id: user.id,
             company_name: companyName,
             budget: parseInt(budget, 10) || 0,
             answers: newAnswers
-          }]);
+          }])
+          .select('id')
+          .single();
 
         if (error) {
           console.error("エラー内容:", error.message);
           throw error;
         }
 
-        // データの引き継ぎ：URLパラメータに回答も含めて結果ページへ
+        // データの引き継ぎ：URLパラメータに診断IDと回答も含めて結果ページへ
         const query = new URLSearchParams({
+          id: data.id,
           company: companyName,
           budget: budget,
           answers: JSON.stringify(newAnswers)
         }).toString();
 
         router.push(`/home/result?${query}`);
-      } catch (error) {
-        alert("保存に失敗しました");
+      } catch (error: any) {
+        alert(`保存に失敗しました: ${error.message}`);
       } finally {
         setIsSubmitting(false);
       }
@@ -84,6 +93,7 @@ function QuestionContent() {
           <span>予算: {Number(budget) ? Number(budget).toLocaleString() : 0}円</span>
         </div>
 
+        {/* developブランチのプログレスバーを採用 */}
         <div className="w-full bg-gray-100 h-2 rounded-full mb-8">
           <div 
             className="bg-blue-500 h-2 rounded-full transition-all duration-300"
@@ -109,7 +119,7 @@ function QuestionContent() {
           ))}
         </div>
 
-        {/* 4. やり直すボタンの挙動修正 */}
+        {/* 4. やり直すボタン */}
         <div className="mt-8 text-center">
           <button
             onClick={() => router.push('/home')}
@@ -122,6 +132,7 @@ function QuestionContent() {
     </div>
   );
 }
+
 export default function QuestionPage() {
   return (
     <Suspense fallback={

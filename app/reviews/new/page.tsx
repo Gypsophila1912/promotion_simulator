@@ -20,6 +20,7 @@ export default function NewReviewPage() {
     target_audience: "",
     result_description: "",
     roi_rating: "3",
+    simulation_link: "", // ← 変更
   });
 
   const AD_METHODS = [
@@ -43,7 +44,6 @@ export default function NewReviewPage() {
     setLoading(true);
     setMessage("");
 
-    // バリデーション: 広告手法が1つも選択されていない場合
     if (reviewData.ad_methods.length === 0) {
       setMessage("❌ 広告手法を最低1つ選択してください");
       setLoading(false);
@@ -51,7 +51,6 @@ export default function NewReviewPage() {
     }
 
     try {
-      // ログインユーザー取得
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -73,6 +72,7 @@ export default function NewReviewPage() {
           target_audience: reviewData.target_audience,
           result_description: reviewData.result_description,
           roi_rating: Number(reviewData.roi_rating),
+          simulation_link: reviewData.simulation_link || null, // ← 変更
         },
       ]);
 
@@ -81,7 +81,6 @@ export default function NewReviewPage() {
         setMessage(`❌ エラー: ${error.message}`);
       } else {
         setMessage("✅ 口コミを保存しました！");
-        // 1秒後に一覧ページへ遷移
         setTimeout(() => {
           router.push("/reviews");
         }, 1000);
@@ -144,6 +143,25 @@ export default function NewReviewPage() {
             }
             className="w-full px-3 py-2 border rounded-md"
             required
+          />
+        </div>
+
+        {/* 実施シミュレーションリンク */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            実施シミュレーションリンク
+          </label>
+          <input
+            type="url"
+            value={reviewData.simulation_link}
+            onChange={(e) =>
+              setReviewData({
+                ...reviewData,
+                simulation_link: e.target.value,
+              })
+            }
+            placeholder="https://example.com"
+            className="w-full px-3 py-2 border rounded-md"
           />
         </div>
 

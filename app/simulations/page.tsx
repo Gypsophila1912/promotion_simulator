@@ -18,54 +18,57 @@ export default async function SimulationsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">シミュレーション一覧</h1>
-        <Link
-          href="/simulations/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          新規作成
-        </Link>
-      </div>
-
-      {!simulations || simulations.length === 0 ? (
-        <div className="rounded-lg bg-white p-12 text-center shadow">
-          <p className="text-gray-500">まだシミュレーションがありません</p>
+    <main className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-100 py-10 px-2">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-center text-slate-800 mb-8 tracking-tight drop-shadow-sm">
+          シミュレーション一覧
+        </h1>
+        <div className="flex justify-center mb-8">
           <Link
             href="/simulations/new"
-            className="mt-4 inline-block text-blue-600 hover:text-blue-700"
+            className="bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
-            最初のシミュレーションを作成する
+            ＋ 新規作成
           </Link>
         </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {simulations.map((simulation: Simulation) => (
+        {!simulations || simulations?.length === 0 ? (
+          <div className="rounded-2xl bg-white/90 p-12 text-center shadow-xl border border-gray-100">
+            <p className="text-gray-500 mb-4">まだシミュレーションがありません</p>
             <Link
-              key={simulation.id}
-              href={`/simulations/${simulation.id}`}
-              className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-lg"
+              href="/simulations/new"
+              className="inline-block text-blue-600 hover:text-blue-700 font-bold"
             >
-              <h2 className="text-xl font-semibold text-gray-900">
-                {simulation.company_name}
-              </h2>
-              <div className="mt-2 space-y-1 text-sm text-gray-600">
-                <p>投資カテゴリー: {simulation.industry}</p>
-                <p>予算: {simulation.budget.toLocaleString()}円</p>
-              </div>
-              {simulation.analysis_result && (
-                <div className="mt-3 rounded bg-green-50 px-3 py-1 text-xs text-green-700">
-                  分析済み
-                </div>
-              )}
-              <p className="mt-3 text-xs text-gray-400">
-                {new Date(simulation.created_at).toLocaleDateString("ja-JP")}
-              </p>
+              最初のシミュレーションを作成する
             </Link>
-          ))}
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {simulations.map((simulation: Simulation) => (
+              <Link
+                key={simulation.id}
+                href={`/simulations/${simulation.id}`}
+                className="rounded-2xl bg-white/90 p-6 shadow-xl border border-gray-100 transition-all hover:shadow-2xl hover:-translate-y-1"
+              >
+                <h2 className="text-xl font-bold text-blue-700 mb-2 truncate">
+                  {simulation.company_name}
+                </h2>
+                <div className="space-y-1 text-sm text-gray-700 mb-2">
+                  <p>投資カテゴリー: <span className="font-semibold text-slate-800">{simulation.industry}</span></p>
+                  <p>予算: <span className="font-semibold text-slate-800">{simulation.budget.toLocaleString()}円</span></p>
+                </div>
+                {simulation.analysis_result && (
+                  <div className="mt-3 rounded bg-green-50 px-3 py-1 text-xs text-green-700 font-bold inline-block">
+                    分析済み
+                  </div>
+                )}
+                <p className="mt-3 text-xs text-gray-400">
+                  {new Date(simulation.created_at).toLocaleDateString("ja-JP")}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }

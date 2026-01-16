@@ -22,7 +22,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 border-b bg-white">
       <div className="flex h-14 items-center justify-between px-4">
         <Link href="/" className="font-bold">
-          MyApp
+          プロモーションシミュレーター
         </Link>
 
         <HeaderNav />
