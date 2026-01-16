@@ -14,9 +14,9 @@ export default async function HomePage() {
              style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
         {/* ふわふわ動く光のオーブ */}
-        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-orange-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob"></div>
-        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-blue-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-[-20%] left-[20%] w-[800px] h-[800px] bg-pink-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-blob animation-delay-4000"></div>
+       <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-orange-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-[blob_7s_ease-in-out_infinite]"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-blue-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-[blob_7s_ease-in-out_infinite] [animation-delay:2s]"></div>
+        <div className="absolute bottom-[-20%] left-[20%] w-[800px] h-[800px] bg-pink-200/40 rounded-full blur-3xl mix-blend-multiply filter animate-[blob_7s_ease-in-out_infinite] [animation-delay:4s]"></div>
       </div>
 
       {/* 2. メインコンテンツ */}
@@ -68,7 +68,7 @@ export default async function HomePage() {
                   今すぐシュミレーション<span className="bg-white/20 rounded-full w-6 h-6 flex items-center justify-center text-sm">➜</span>
                 </span>
                 {/* キラリと光るエフェクト */}
-                <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 group-hover:animate-shine"></div>
+                <div className="absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 group-hover:animate-[shine_0.8s_ease-in-out]"></div>
               </Link>
               
               <Link
@@ -82,7 +82,7 @@ export default async function HomePage() {
         </div>
 
         {/* 3. ビジュアルデモエリア（浮遊する要素） */}
-        <div className="relative w-full max-w-5xl h-[400px] perspective-1000">
+         <div className="relative w-full max-w-5xl h-[400px] perspective-[1000px]">
           
           {/* 中央：PC画面のようなメインビジュアル */}
           <div className="absolute left-1/2 top-0 -translate-x-1/2 w-full max-w-3xl bg-white rounded-t-3xl shadow-2xl border-4 border-white ring-1 ring-slate-100 p-2 md:p-4 overflow-hidden transform rotate-x-12 origin-bottom transition-transform hover:rotate-x-0 duration-700">

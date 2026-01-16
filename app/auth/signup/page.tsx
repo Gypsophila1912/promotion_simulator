@@ -58,7 +58,7 @@ export default async function SignupPage() {
              style={{ backgroundImage: 'radial-gradient(#CBD5E1 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100/40 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100/40 rounded-full blur-3xl mix-blend-multiply filter opacity-70 animate-blob [animation-delay:2s]"></div>
         
         {/* フローティングカードのアニメーションコンテナ */}
         <div className="absolute inset-0 flex items-center justify-center">

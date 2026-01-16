@@ -63,11 +63,11 @@ export default async function LoginPage() {
                 <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-lg">Imbalance...</span>
               </div>
               {/* SNS費 */}
-              <div className="w-full bg-blue-200 h-12 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-blue-200 h-12 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               {/* 広告費（過多） */}
-              <div className="w-full bg-orange-200 h-32 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-orange-200 h-32 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               {/* 運営費 */}
-              <div className="w-full bg-slate-200 h-8 rounded-2xl mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-slate-200 h-8 rounded-2xl mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               <p className="text-center text-xs font-bold text-slate-400 mt-3">Plan A</p>
             </div>
 
@@ -106,11 +106,11 @@ export default async function LoginPage() {
                 <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-lg">Low Return</span>
               </div>
               {/* SNS費 */}
-              <div className="w-full bg-blue-200 h-8 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-blue-200 h-8 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               {/* 広告費 */}
-              <div className="w-full bg-orange-200 h-8 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-orange-200 h-8 rounded-2xl mb-2 mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               {/* 運営費 */}
-              <div className="w-full bg-slate-200 h-8 rounded-2xl mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
+              <div className="bg-slate-200 h-8 rounded-2xl mx-auto w-[90%] transition-all duration-500 group-hover:scale-95"></div>
               <p className="text-center text-xs font-bold text-slate-400 mt-3">Plan C</p>
             </div>
 
