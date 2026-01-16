@@ -39,8 +39,19 @@ export interface Review {
   comment: string;
   created_at: string;
   updated_at: string;
+  // HomeDisplayとdevelopの両方のフィールドを統合
+  ad_methods: string[] | any;
   ad_purpose: string;
   target_audience: string;
+}
+
+export interface DiagnosisHistory {
+  id: string;
+  user_id: string;
+  company_name: string;
+  budget: number;
+  answers: string[];      
+  created_at: string;
 }
 
 // フォーム用の型
@@ -60,7 +71,14 @@ export interface ReviewFormData {
   comment: string;
 }
 
-// AI投資配分提案の型定義
+// HomeDisplayからの定義
+export interface DiagnosisFormData {
+  company_name: string;
+  budget: number;
+  answers: string[];
+}
+
+// developからの定義：AI投資配分提案の型定義
 export interface InvestmentAllocation {
   category: string; // カテゴリー名 (例: "SNS広告", "YouTube広告")
   percentage: number; // 配分割合 (0-100)
