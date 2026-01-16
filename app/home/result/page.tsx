@@ -71,21 +71,25 @@ function ResultContent() {
         if (revError) throw revError;
         setReviews(revData as Review[]);
 
-        // Server Actionを使用してAI分析を実行（診断IDを渡す）
-        const result = await generateHomeAdvice(diagnosisId);
-        if (result.success && result.advice) {
-          setAiAdvice(result.advice);
-          if (result.cached) {
-            console.log("キャッシュされたAI分析結果を使用");
-          }
+        // 診断データ取得（AI分析結果も含む）
+        const { data: diagnosis, error: diagnosisError } = await supabase
+          .from("ad_diagnoses")
+          .select("ai_advice")
+          .eq("id", diagnosisId)
+          .single();
+
+        if (diagnosisError || !diagnosis) {
+          setAiAdvice("診断データが見つかりません");
+        } else if (diagnosis.ai_advice && diagnosis.ai_advice.trim() !== "") {
+          setAiAdvice(diagnosis.ai_advice);
         } else {
-          setAiAdvice(result.error || "AI分析に失敗しました");
+          setAiAdvice("AI分析結果がまだ保存されていません。しばらくしてから再度お試しください。");
         }
 
       } catch (err: unknown) {
         console.error("Diagnosis error:", err);
         const errorMessage = err instanceof Error ? err.message : "Unknown error";
-        setAiAdvice(`診断結果の生成中にエラーが発生しました: ${errorMessage}`);
+        setAiAdvice(`診断結果の取得中にエラーが発生しました: ${errorMessage}`);
       } finally {
         setLoadingReviews(false);
         setIsAnalyzing(false);
@@ -110,7 +114,7 @@ function ResultContent() {
               <span>AIが分析しています...</span>
             </div>
           ) : (
-            <div className="whitespace-pre-wrap break-words text-base leading-relaxed" style={{wordBreak: 'break-word'}}>
+            <div className="whitespace-pre-wrap break-words text-base leading-relaxed max-h-[400px] overflow-y-auto pr-2" style={{wordBreak: 'break-word'}}>
               {aiAdvice}
             </div>
           )}
