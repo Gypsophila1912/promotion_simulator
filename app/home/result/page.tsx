@@ -1,9 +1,9 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { getAiAdvice } from '@/lib/ai/gemini';
+import { generateHomeAdvice } from '@/app/actions/diagnosis';
 import { Review } from '@/lib/types/database';
 
 const QUESTIONS = [
@@ -19,21 +19,44 @@ function ResultContent() {
   const router = useRouter();
   const supabase = createClient();
 
+  const diagnosisId = searchParams.get('id') || '';
   const companyName = searchParams.get('company') || 'お客様';
   const budget = Number(searchParams.get('budget')) || 0;
-  
-  let answers: string[] = [];
-  try {
-    answers = JSON.parse(searchParams.get('answers') || '[]');
-  } catch (e) { answers = []; }
+  const answersParam = searchParams.get('answers') || '[]';
+
+  // useMemoでanswersをメモ化して無限ループを防止
+  const answers = useMemo(() => {
+    try {
+      return JSON.parse(answersParam);
+    } catch {
+      return [];
+    }
+  }, [answersParam]);
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [aiAdvice, setAiAdvice] = useState<string>("AIが分析しています...");
+  const [isAnalyzing, setIsAnalyzing] = useState(true);
+
+  // 重複実行を防ぐためのref
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    // 既に実行済みの場合はスキップ
+    if (hasRun.current) return;
+
     const runDiagnosis = async () => {
+      if (!diagnosisId) {
+        setAiAdvice("診断IDが見つかりません。もう一度お試しください。");
+        setIsAnalyzing(false);
+        setLoadingReviews(false);
+        return;
+      }
+
+      hasRun.current = true;
       setLoadingReviews(true);
+      setIsAnalyzing(true);
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -41,27 +64,36 @@ function ResultContent() {
           return;
         }
 
-        // 口コミ取得 (カラム名 roi_rating, result_description)
+        // 口コミ取得
         const { data: revData, error: revError } = await supabase
           .from("reviews").select("*").limit(3);
-        
+
         if (revError) throw revError;
         setReviews(revData as Review[]);
 
-        // Gemini呼び出し
-        const advice = await getAiAdvice(companyName, budget, answers);
-        setAiAdvice(advice);
+        // Server Actionを使用してAI分析を実行（診断IDを渡す）
+        const result = await generateHomeAdvice(diagnosisId);
+        if (result.success && result.advice) {
+          setAiAdvice(result.advice);
+          if (result.cached) {
+            console.log("キャッシュされたAI分析結果を使用");
+          }
+        } else {
+          setAiAdvice(result.error || "AI分析に失敗しました");
+        }
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Diagnosis error:", err);
-        setAiAdvice("診断結果の生成中にエラーが発生しました。");
+        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        setAiAdvice(`診断結果の生成中にエラーが発生しました: ${errorMessage}`);
       } finally {
         setLoadingReviews(false);
+        setIsAnalyzing(false);
       }
     };
 
     runDiagnosis();
-  }, [companyName, budget, router]); // 無限ループ防止のためsupabaseを除外
+  }, [diagnosisId, router, supabase]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -70,9 +102,18 @@ function ResultContent() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <div className="bg-blue-600 text-white p-8 rounded-3xl shadow-lg">
+        <div className="bg-cyan-200 text-slate-900 p-8 rounded-3xl shadow-lg border-2 border-cyan-400">
           <h2 className="text-xl font-bold mb-4">🚀 戦略アドバイス</h2>
-          <p className="whitespace-pre-wrap">{aiAdvice}</p>
+          {isAnalyzing ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin h-5 w-5 border-2 border-cyan-700 rounded-full border-t-transparent"></div>
+              <span>AIが分析しています...</span>
+            </div>
+          ) : (
+            <div className="whitespace-pre-wrap break-words text-base leading-relaxed" style={{wordBreak: 'break-word'}}>
+              {aiAdvice}
+            </div>
+          )}
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
@@ -90,17 +131,23 @@ function ResultContent() {
 
       <div className="bg-gray-50 p-8 rounded-3xl border">
         <h2 className="text-xl font-bold mb-6">🤝 あなたに近い事例</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          {reviews.map((rev) => (
-            <div key={rev.id} className="bg-white p-4 rounded-2xl shadow-sm border">
-              <div className="flex justify-between mb-2">
-                <span className="font-bold truncate">{rev.company_name}</span>
-                <span className="text-yellow-500">★{rev.rating}</span>
+        {loadingReviews ? (
+          <div className="text-center py-4">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent mx-auto"></div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            {reviews.map((rev) => (
+              <div key={rev.id} className="bg-white p-4 rounded-2xl shadow-sm border">
+                <div className="flex justify-between mb-2">
+                  <span className="font-bold truncate">{rev.company_name}</span>
+                  <span className="text-yellow-500">★{rev.rating}</span>
+                </div>
+                <p className="text-gray-600 text-sm italic">"{rev.comment}"</p>
               </div>
-              <p className="text-gray-600 text-sm italic">"{rev.comment}"</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

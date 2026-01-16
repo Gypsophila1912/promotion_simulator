@@ -76,6 +76,7 @@ export default function HomePage() {
                     <button
                       onClick={() => {
                         const query = new URLSearchParams({
+                          id: item.id,
                           company: item.company_name,
                           budget: item.budget.toString(),
                           answers: JSON.stringify(item.answers)

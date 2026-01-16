@@ -13,9 +13,7 @@ export default function Header() {
   if (
     pathname === "/auth/login" ||
     pathname === "/auth/signup" ||
-    pathname === "/" ||
-    // /home のページ（とそのサブパス）でもヘッダーを非表示にする
-    pathname.startsWith("/home")
+    pathname === "/"
   ) {
     return null;
   }

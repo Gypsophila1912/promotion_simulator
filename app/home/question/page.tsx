@@ -48,21 +48,25 @@ function QuestionContent() {
         if (!user) throw new Error("認証が必要です");
 
         // user_id を追加して保存（セキュリティ対策）
-        const { error } = await supabase.from('ad_diagnoses')
+        // IDを取得するために.select('id').single()を追加
+        const { data, error } = await supabase.from('ad_diagnoses')
           .insert([{
-            user_id: user.id, // HomeDisplayの必須フィールド
+            user_id: user.id,
             company_name: companyName,
             budget: parseInt(budget, 10) || 0,
             answers: newAnswers
-          }]);
+          }])
+          .select('id')
+          .single();
 
         if (error) {
           console.error("エラー内容:", error.message);
           throw error;
         }
 
-        // データの引き継ぎ：URLパラメータに回答も含めて結果ページへ
+        // データの引き継ぎ：URLパラメータに診断IDと回答も含めて結果ページへ
         const query = new URLSearchParams({
+          id: data.id,
           company: companyName,
           budget: budget,
           answers: JSON.stringify(newAnswers)
