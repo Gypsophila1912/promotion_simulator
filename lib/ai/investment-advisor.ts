@@ -275,7 +275,7 @@ function parseAgeAllocationResponse(
     }
 
     // 合計チェックと調整（1%の誤差を許容）
-    const total = Object.values(allocation as AgeAllocation).reduce(
+    const total = Object.values(allocation as unknown as AgeAllocation).reduce(
       (sum, val) => sum + val,
       0
     );
@@ -313,7 +313,7 @@ function parseAgeAllocationResponse(
     }
 
     return {
-      allocation: allocation as AgeAllocation,
+      allocation: allocation as unknown as AgeAllocation,
       reasoning: response.reasoning as { [key: string]: string },
       summary: response.summary,
     };
@@ -359,7 +359,7 @@ function parseMonthAllocationResponse(
     }
 
     // 合計チェックと調整
-    const total = Object.values(allocation).reduce(
+    const total = Object.values(allocation).reduce<number>(
       (sum, val) => sum + (val as number),
       0
     );
