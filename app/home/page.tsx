@@ -1,55 +1,97 @@
 "use client";
-import React, { useState } from 'react';
-import Link from 'next/link';
+
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { DiagnosisHistory } from '@/lib/types/database';
 
 export default function HomePage() {
-  const [companyName, setCompanyName] = useState('');
-  const [budget, setBudget] = useState('');
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [histories, setHistories] = useState<DiagnosisHistory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchUserDataAndHistories = async () => {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        setUserName(user.user_metadata?.full_name || user.email || "ユーザー");
+
+        const { data, error } = await supabase
+          .from('ad_diagnoses')
+          .select('*')
+          .eq('user_id', user.id) // セキュリティ対策
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setHistories(data || []);
+
+      } catch (error: any) {
+        console.error("Fetch Error:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserDataAndHistories();
+  }, [router]); // supabaseを依存配列から削除して無限ループを防止
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-8 text-gray-800">ホーム画面</h1>
-        
-        {/* onSubmitは不要になるのでdivに変更してもOKです */}
-        <div className="space-y-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">会社名</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="株式会社〇〇"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-              />
-            </div>
-            <div className="w-1/3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">予算</label>
-              <input
-                type="number"
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="金額"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-              />
-            </div>
-          </div>
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">こんにちは、{userName} さん</h1>
+        <button onClick={() => router.push('/home/new')} className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold">
+          新規診断
+        </button>
+      </div>
 
-          {/* 送信ボタン（質問へ） */}
-          {/* queryを使って、入力した会社名と予算を次のページへ送る設定です */}
-          <Link 
-            href={{
-              pathname: "/home/question",
-              query: { company: companyName, budget: budget }
-            }} 
-            className="block w-full"
-          >
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-md transition duration-200">
-              質問へ
-            </button>
-          </Link>
-        </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-gray-400">読み込み中...</div>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-xs">
+                <th className="p-4">実施日</th>
+                <th className="p-4">会社名</th>
+                <th className="p-4">予算</th>
+                <th className="p-4"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {histories.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 group">
+                  <td className="p-4 text-sm">{new Date(item.created_at).toLocaleDateString()}</td>
+                  <td className="p-4 font-bold">{item.company_name}</td>
+                  <td className="p-4">¥{item.budget.toLocaleString()}</td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => {
+                        const query = new URLSearchParams({
+                          company: item.company_name,
+                          budget: item.budget.toString(),
+                          answers: JSON.stringify(item.answers)
+                        }).toString();
+                        router.push(`/home/result?${query}`);
+                      }}
+                      className="text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      結果を見る
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
